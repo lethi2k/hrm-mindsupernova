@@ -49,7 +49,10 @@
         "nyholm/psr7": "~1.8.1",
         "jumbojett/openid-connect-php": "~1.0.0",
         "enshrined/svg-sanitize": "~0.22.0",
-        "monolog/monolog": "~2.10.0"
+        "monolog/monolog": "~2.10.0",
+        "phpoffice/phpspreadsheet": "^1.29",
+        "maennchen/zipstream-php": "^2.4",
+        "dompdf/dompdf": "^2.0"
     },
     "require-dev": {
         "phpunit/phpunit": "^9.6",
@@ -82,6 +85,7 @@
             "OrangeHRM\\SystemCheck\\": "./plugins/orangehrmSystemCheckPlugin",
             "OrangeHRM\\Mobile\\": "./plugins/orangehrmMobilePlugin",
             "OrangeHRM\\Claim\\": "./plugins/orangehrmClaimPlugin",
+            "OrangeHRM\\Payroll\\": "./plugins/orangehrmPayrollPlugin",
             "OrangeHRM\\Installer\\": "../installer",
             "OrangeHRM\\Entity\\": [
                 "./plugins/orangehrmAdminPlugin/entity",
@@ -99,7 +103,8 @@
                 "./plugins/orangehrmLDAPAuthenticationPlugin/entity",
                 "./plugins/orangehrmBuzzPlugin/entity",
                 "./plugins/orangehrmClaimPlugin/entity",
-                "./plugins/orangehrmOpenidAuthenticationPlugin/entity"
+                "./plugins/orangehrmOpenidAuthenticationPlugin/entity",
+                "./plugins/orangehrmPayrollPlugin/entity"
             ]
         }
     },
@@ -126,6 +131,7 @@
             "OrangeHRM\\Tests\\Help\\": "./plugins/orangehrmHelpPlugin/test",
             "OrangeHRM\\Tests\\Mobile\\": "./plugins/orangehrmMobilePlugin/test",
             "OrangeHRM\\Tests\\Claim\\": "./plugins/orangehrmClaimPlugin/test",
+            "OrangeHRM\\Tests\\Payroll\\": "./plugins/orangehrmPayrollPlugin/test",
             "OrangeHRM\\Tests\\OpenidAuthentication\\": "./plugins/orangehrmOpenidAuthenticationPlugin/test"
         }
     },

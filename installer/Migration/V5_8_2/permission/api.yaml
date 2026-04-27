@@ -1,0 +1,59 @@
+apiv2_payroll_runs:
+  description: "Payroll runs"
+  api: OrangeHRM\Payroll\Api\PayrollRunAPI
+  module: payroll
+  allowed:
+    read: true
+    create: true
+    update: true
+    delete: true
+  permissions:
+    - { role: Admin, permission: { read: true, create: true, update: true, delete: true } }
+
+apiv2_payroll_run_operations:
+  description: "Payroll run operations"
+  api: OrangeHRM\Payroll\Api\PayrollRunOperationAPI
+  module: payroll
+  allowed:
+    read: true
+    create: true
+    update: true
+    delete: true
+  permissions:
+    - { role: Admin, permission: { read: true, create: true, update: true, delete: true } }
+
+apiv2_payroll_payslips:
+  description: "Payroll payslips"
+  api: OrangeHRM\Payroll\Api\PayrollPayslipAPI
+  module: payroll
+  allowed:
+    read: true
+    create: true
+    update: true
+    delete: true
+  permissions:
+    - { role: Admin, permission: { read: true, create: true, update: true, delete: true } }
+
+apiv2_payroll_email_logs:
+  description: "Payroll email logs"
+  api: OrangeHRM\Payroll\Api\PayrollEmailLogAPI
+  module: payroll
+  allowed:
+    read: true
+    create: true
+    update: true
+    delete: true
+  permissions:
+    - { role: Admin, permission: { read: true, create: true, update: true, delete: true } }
+
+apiv2_payroll_config:
+  description: "Payroll configuration"
+  api: OrangeHRM\Payroll\Api\PayrollConfigAPI
+  module: payroll
+  allowed:
+    read: true
+    create: true
+    update: true
+    delete: true
+  permissions:
+    - { role: Admin, permission: { read: true, create: true, update: true, delete: true } }

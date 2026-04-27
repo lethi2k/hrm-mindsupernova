@@ -328,11 +328,7 @@ class EmployeeSalaryComponentAPI extends Endpoint implements CrudEndpoint
      */
     protected function setEmployeeSalary(EmployeeSalary $employeeSalary): void
     {
-        $payGradeId = $this->getRequestParams()->getIntOrNull(
-            RequestParams::PARAM_TYPE_BODY,
-            self::PARAMETER_PAY_GRADE_ID
-        );
-        $employeeSalary->getDecorator()->setPayGradeById($payGradeId);
+        $employeeSalary->setPayGrade(null);
         $employeeSalary->setSalaryName(
             $this->getRequestParams()->getString(
                 RequestParams::PARAM_TYPE_BODY,
@@ -346,24 +342,31 @@ class EmployeeSalaryComponentAPI extends Endpoint implements CrudEndpoint
             )
         );
 
-        $currencyTypeId = $this->getRequestParams()->getString(
+        $currencyTypeId = $this->getRequestParams()->getStringOrNull(
             RequestParams::PARAM_TYPE_BODY,
             self::PARAMETER_CURRENCY_ID
         );
+        if (is_null($currencyTypeId)) {
+            $salaryId = $this->getRequestParams()->getIntOrNull(
+                RequestParams::PARAM_TYPE_ATTRIBUTE,
+                CommonParams::PARAMETER_ID
+            );
+            if (!is_null($salaryId)) {
+                $currencyTypeId = $employeeSalary->getCurrencyType()->getCurrencyId();
+            } else {
+                $currencies = $this->getPayGradeService()->getCurrencyArray();
+                if (empty($currencies)) {
+                    throw $this->getBadRequestException('No currency is configured');
+                }
+                $currencyTypeId = $currencies[0]['id'];
+            }
+        }
         $employeeSalary->getDecorator()->setCurrencyTypeById($currencyTypeId);
 
         $salaryAmount = $this->getRequestParams()->getString(
             RequestParams::PARAM_TYPE_BODY,
             self::PARAMETER_SALARY_AMOUNT
         );
-
-        if (!is_null($payGradeId)) {
-            if (!$this->getPayGradeService()
-                ->isValidSalaryAmountForPayGradeCurrency($salaryAmount, $currencyTypeId, $payGradeId)
-            ) {
-                throw $this->getBadRequestException('Salary should be within min and max');
-            }
-        }
 
         $employeeSalary->setAmount($salaryAmount);
         $employeeSalary->setComment(
@@ -443,12 +446,6 @@ class EmployeeSalaryComponentAPI extends Endpoint implements CrudEndpoint
                 CommonParams::PARAMETER_EMP_NUMBER,
                 new Rule(Rules::IN_ACCESSIBLE_EMP_NUMBERS)
             ),
-            $this->getValidationDecorator()->notRequiredParamRule(
-                new ParamRule(
-                    self::PARAMETER_PAY_GRADE_ID,
-                    new Rule(Rules::POSITIVE)
-                )
-            ),
             $this->getValidationDecorator()->requiredParamRule(
                 new ParamRule(
                     self::PARAMETER_SALARY_COMPONENT,
@@ -462,9 +459,11 @@ class EmployeeSalaryComponentAPI extends Endpoint implements CrudEndpoint
                     new Rule(Rules::POSITIVE)
                 )
             ),
-            new ParamRule(
-                self::PARAMETER_CURRENCY_ID,
-                new Rule(Rules::CURRENCY)
+            $this->getValidationDecorator()->notRequiredParamRule(
+                new ParamRule(
+                    self::PARAMETER_CURRENCY_ID,
+                    new Rule(Rules::CURRENCY)
+                )
             ),
             $this->getValidationDecorator()->requiredParamRule(
                 new ParamRule(

@@ -46,8 +46,6 @@ class EmployeeSalaryController extends BaseViewEmployeeController
         if ($empNumber) {
             $component = new Component('employee-salary');
 
-            $currencies = $this->getPayGradeService()->getCurrencyArray();
-            $paygrades = $this->getPayGradeService()->getPayGradeArray();
             $payFrequencies = $this->getPayGradeService()->getPayPeriodArray();
             $accountTypes = [
                 ["id" => 'SAVINGS', "label" => "Savings"],
@@ -55,8 +53,6 @@ class EmployeeSalaryController extends BaseViewEmployeeController
                 ["id" => 'OTHER', "label" => "Other"]
             ];
             $component->addProp(new Prop('emp-number', Prop::TYPE_NUMBER, $empNumber));
-            $component->addProp(new Prop('currencies', Prop::TYPE_ARRAY, $currencies));
-            $component->addProp(new Prop('paygrades', Prop::TYPE_ARRAY, $paygrades));
             $component->addProp(
                 new Prop(
                     'account-types',

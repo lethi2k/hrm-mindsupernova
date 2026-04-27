@@ -22,9 +22,7 @@
     <save-salary-component
       v-if="showSaveModal"
       :http="http"
-      :paygrades="paygrades"
       :pay-frequencies="payFrequencies"
-      :currencies="currencies"
       :account-types="accountTypes"
       @close="onSaveModalClose"
     ></save-salary-component>
@@ -32,9 +30,7 @@
       v-if="showEditModal"
       :http="http"
       :data="editModalState"
-      :paygrades="paygrades"
       :pay-frequencies="payFrequencies"
-      :currencies="currencies"
       :account-types="accountTypes"
       @close="onEditModalClose"
     ></edit-salary-component>
@@ -90,7 +86,6 @@ const salaryNormalizer = (data) => {
       id: item.id,
       name: item.salaryName,
       amount: item.amount,
-      currency: item.currencyType?.name,
       frequency: item.payPeriod?.name,
       depositAmount: item.directDebit?.amount,
     };
@@ -111,15 +106,7 @@ export default {
       type: String,
       required: true,
     },
-    paygrades: {
-      type: Array,
-      default: () => [],
-    },
     payFrequencies: {
-      type: Array,
-      default: () => [],
-    },
-    currencies: {
       type: Array,
       default: () => [],
     },
@@ -171,11 +158,6 @@ export default {
           style: {flex: 1},
         },
         {name: 'amount', title: this.$t('general.amount'), style: {flex: 1}},
-        {
-          name: 'currency',
-          title: this.$t('general.currency'),
-          style: {flex: 1},
-        },
         {
           name: 'frequency',
           title: this.$t('pim.pay_frequency'),

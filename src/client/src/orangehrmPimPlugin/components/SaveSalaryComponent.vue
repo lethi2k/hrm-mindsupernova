@@ -36,29 +36,10 @@
           </oxd-grid-item>
           <oxd-grid-item>
             <oxd-input-field
-              v-model="salaryComponent.payGradeId"
-              type="select"
-              :label="$t('general.pay_grade')"
-              :options="paygrades"
-            />
-          </oxd-grid-item>
-          <oxd-grid-item>
-            <oxd-input-field
               v-model="salaryComponent.payFrequencyId"
               type="select"
               :label="$t('pim.pay_frequency')"
               :options="payFrequencies"
-            />
-          </oxd-grid-item>
-          <oxd-grid-item>
-            <oxd-input-field
-              :key="currenciesOpts"
-              v-model="salaryComponent.currencyId"
-              type="select"
-              :label="$t('general.currency')"
-              :options="currenciesOpts"
-              :rules="rules.currencyId"
-              required
             />
           </oxd-grid-item>
           <oxd-grid-item>
@@ -68,13 +49,6 @@
               :rules="rules.salaryAmount"
               required
             />
-            <oxd-text
-              v-if="minAmount !== undefined || maxAmount !== undefined"
-              class="orangehrm-input-hint"
-              tag="p"
-            >
-              Min: {{ minAmount ?? 0 }} - Max: {{ maxAmount ?? 0 }}
-            </oxd-text>
           </oxd-grid-item>
         </oxd-grid>
       </oxd-form-row>
@@ -177,9 +151,7 @@ const salComponentModel = {
   name: '',
   salaryAmount: '',
   comment: '',
-  payGradeId: null,
   payFrequencyId: null,
-  currencyId: null,
 };
 
 const directDepositModel = {
@@ -201,15 +173,7 @@ export default {
       type: Object,
       required: true,
     },
-    paygrades: {
-      type: Array,
-      default: () => [],
-    },
     payFrequencies: {
-      type: Array,
-      default: () => [],
-    },
-    currencies: {
       type: Array,
       default: () => [],
     },
@@ -228,7 +192,6 @@ export default {
       salaryComponent: {...salComponentModel},
       directDeposit: {...directDepositModel},
       accountType: '',
-      usableCurrencies: [],
       rules: {
         name: [required, shouldNotExceedCharLength(100)],
         salaryAmount: [
@@ -237,7 +200,6 @@ export default {
           maxCurrency(1000000000),
         ],
         comment: [shouldNotExceedCharLength(250)],
-        currencyId: [required],
         directDepositAccount: [required, shouldNotExceedCharLength(100)],
         directDepositAccountType: [required],
         accountType: [required, shouldNotExceedCharLength(20)],
@@ -259,81 +221,6 @@ export default {
     showOptionalAccountType() {
       return this.directDeposit.directDepositAccountType?.id == 'OTHER';
     },
-    minAmount() {
-      return this.currencyInfo?.minAmount;
-    },
-    maxAmount() {
-      return this.currencyInfo?.maxAmount;
-    },
-    currenciesOpts() {
-      const paygrade = this.salaryComponent.payGradeId?.id;
-      if (!paygrade) {
-        return this.currencies;
-      } else if (paygrade && this.usableCurrencies.length > 0) {
-        return this.currencies.filter(
-          (item) =>
-            this.usableCurrencies.findIndex(
-              (currency) => currency.id === item.id,
-            ) > -1,
-        );
-      } else {
-        return [];
-      }
-    },
-    currencyInfo() {
-      return this.usableCurrencies.find(
-        (item) => item.id === this.salaryComponent.currencyId?.id,
-      );
-    },
-  },
-
-  watch: {
-    'salaryComponent.payGradeId': function (newVal) {
-      if (newVal?.id) {
-        this.isLoading = true;
-        this.http
-          .request({
-            url: `/api/v2/admin/pay-grades/${newVal.id}/currencies`,
-            method: 'GET',
-            params: {limit: 0},
-          })
-          .then((response) => {
-            const {data} = response.data;
-            this.usableCurrencies = data.map((item) => {
-              return {
-                id: item.currencyType.id,
-                name: item.currencyType.name,
-                minAmount: item.minSalary,
-                maxAmount: item.maxSalary,
-              };
-            });
-            const currency = this.salaryComponent.currencyId;
-            const currencyIndex = this.usableCurrencies.findIndex(
-              (item) => item.id === currency?.id,
-            );
-            this.salaryComponent.currencyId =
-              currencyIndex === -1 ? null : this.salaryComponent.currencyId;
-          })
-          .then(() => {
-            this.isLoading = false;
-          });
-      } else {
-        this.usableCurrencies = [];
-      }
-    },
-  },
-
-  mounted() {
-    this.$nextTick(() => {
-      this.rules.salaryAmount.push((v) => {
-        const min = this.minAmount ? this.minAmount : 0;
-        return v >= min || this.$t('pim.should_be_within_min_max_values');
-      });
-      this.rules.salaryAmount.push((v) => {
-        const max = this.maxAmount ? this.maxAmount : 999999999;
-        return v <= max || this.$t('pim.should_be_within_min_max_values');
-      });
-    });
   },
 
   methods: {
@@ -344,11 +231,8 @@ export default {
         : this.directDeposit.directDepositAccountType?.id;
       this.http
         .create({
-          // Paygrade fields
           salaryComponent: this.salaryComponent.name,
           salaryAmount: this.salaryComponent.salaryAmount,
-          payGradeId: this.salaryComponent.payGradeId?.id,
-          currencyId: this.salaryComponent.currencyId?.id,
           payFrequencyId: this.salaryComponent.payFrequencyId?.id,
           comment: this.salaryComponent.comment
             ? this.salaryComponent.comment

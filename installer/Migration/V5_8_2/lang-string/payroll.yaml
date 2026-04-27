@@ -1,0 +1,70 @@
+langStrings:
+  -
+    value: "Payroll"
+    unitId: payroll
+  -
+    value: "Payroll Runs"
+    unitId: payroll_runs
+  -
+    value: "Year-Month (YYYY-MM)"
+    unitId: year_month
+  -
+    value: "Status"
+    unitId: payroll_status
+  -
+    value: "Create payroll run"
+    unitId: create_payroll_run
+  -
+    value: "Send payslips"
+    unitId: send_payslips
+  -
+    value: "Payslips"
+    unitId: payslips
+  -
+    value: "Send status"
+    unitId: email_status
+  -
+    value: "Sent"
+    unitId: label_sent
+  -
+    value: "Failed"
+    unitId: label_failed
+  -
+    value: "Pending"
+    unitId: label_pending
+  -
+    value: "Skipped"
+    unitId: label_skipped
+  -
+    value: "Schedule settings"
+    unitId: schedule_settings
+  -
+    value: "Day of month"
+    unitId: schedule_day
+  -
+    value: "Send payslip format"
+    unitId: send_payslip_format
+  -
+    value: "Excel (XLSX)"
+    unitId: format_xlsx
+  -
+    value: "PDF"
+    unitId: format_pdf
+  -
+    value: "Confirm send"
+    unitId: confirm_send
+  -
+    value: "View delivery status"
+    unitId: view_delivery_status
+  -
+    value: "Sync mail status"
+    unitId: sync_mail_status
+  -
+    value: "Recipient email"
+    unitId: recipient_email
+  -
+    value: "Error"
+    unitId: last_error
+  -
+    value: "Run"
+    unitId: payroll_run_id

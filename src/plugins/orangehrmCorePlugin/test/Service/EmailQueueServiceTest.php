@@ -85,7 +85,10 @@ class EmailQueueServiceTest extends KernelTestCase
         $emailService = $this->getMockBuilder(EmailService::class)
             ->disableOriginalConstructor()
             ->onlyMethods(
-                ['setMessageSubject', 'setMessageBody', 'setMessageTo', 'setMessageCc', 'setMessageBcc', 'sendEmail']
+                [
+                    'setMessageSubject', 'setMessageBody', 'setMessageTo', 'setMessageCc', 'setMessageBcc',
+                    'setMessageAttachments', 'sendEmail',
+                ]
             )
             ->getMock();
         $emailService->expects($this->once())
@@ -99,11 +102,13 @@ class EmailQueueServiceTest extends KernelTestCase
         $emailService->expects($this->once())
             ->method('setMessageBcc');
         $emailService->expects($this->once())
+            ->method('setMessageAttachments');
+        $emailService->expects($this->once())
             ->method('sendEmail');
         $emailQueueService = $this->getMockBuilder(EmailQueueService::class)
             ->onlyMethods(['getEmailService'])
             ->getMock();
-        $emailQueueService->expects($this->exactly(6))
+        $emailQueueService->expects($this->exactly(7))
             ->method('getEmailService')
             ->willReturn($emailService);
         $this->createKernelWithMockServices([Services::DATETIME_HELPER_SERVICE => new DateTimeHelperService()]);
@@ -115,8 +120,10 @@ class EmailQueueServiceTest extends KernelTestCase
     {
         $emailService = $this->getMockBuilder(EmailService::class)
             ->disableOriginalConstructor()
-            ->onlyMethods([])
+            ->onlyMethods(['setMessageAttachments'])
             ->getMock();
+        $emailService->expects($this->once())
+            ->method('setMessageAttachments');
         $emailService->setMessageSubject('test Subject');
         $emailService->setMessageBody('test Body');
         $emailService->setMessageTo(['test@orangehrm.com']);
@@ -126,7 +133,7 @@ class EmailQueueServiceTest extends KernelTestCase
         $emailQueueService = $this->getMockBuilder(EmailQueueService::class)
             ->onlyMethods(['getEmailService'])
             ->getMock();
-        $emailQueueService->expects($this->exactly(6))
+        $emailQueueService->expects($this->exactly(7))
             ->method('getEmailService')
             ->willReturn($emailService);
         $emailQueueService->resetEmailService();

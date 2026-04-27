@@ -76,7 +76,8 @@ class EmailQueueService
         array $toList = [],
         string $contentType = Mail::CONTENT_TYPE_TEXT_HTML,
         array $ccList = [],
-        array $bccList = []
+        array $bccList = [],
+        ?array $attachments = null
     ): Mail {
         $mail = new Mail();
         $mail->setSubject($subject);
@@ -85,6 +86,9 @@ class EmailQueueService
         $mail->setContentType($contentType);
         $mail->setCcList($ccList);
         $mail->setBccList($bccList);
+        if ($attachments !== null) {
+            $mail->setAttachments($attachments);
+        }
         return $this->getEmailQueueDao()->saveEmail($mail);
     }
 
@@ -113,6 +117,7 @@ class EmailQueueService
         $this->getEmailService()->setMessageTo($mail->getToList());
         $this->getEmailService()->setMessageCc($mail->getCcList());
         $this->getEmailService()->setMessageBcc($mail->getBccList());
+        $this->getEmailService()->setMessageAttachments($mail->getAttachments() ?? []);
 
         try {
             $result = $this->getEmailService()->sendEmail();
@@ -138,6 +143,7 @@ class EmailQueueService
             $this->getEmailService()->setMessageTo([]);
             $this->getEmailService()->setMessageCc([]);
             $this->getEmailService()->setMessageBcc([]);
+            $this->getEmailService()->setMessageAttachments([]);
         }
     }
 

@@ -421,9 +421,6 @@ export default {
     cellRenderer(...[, , , row]) {
       const cellConfig = {};
       const {approve, reject, cancel, more} = this.leaveActions;
-      const allowedActions = Array.isArray(row.actions)
-        ? row.actions.map((action) => action.action)
-        : [];
       const dropdownActions = [
         {label: this.$t('general.add_comment'), context: 'add_comment'},
         {label: this.$t('leave.view_leave_details'), context: 'leave_details'},

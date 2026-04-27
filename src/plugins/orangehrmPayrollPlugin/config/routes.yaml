@@ -1,0 +1,57 @@
+apiv2_payroll_runs:
+  path: /api/v2/payroll/runs
+  controller: OrangeHRM\Core\Controller\Rest\V2\GenericRestController::handle
+  methods: [GET, POST, DELETE]
+  defaults:
+    _api: OrangeHRM\Payroll\Api\PayrollRunAPI
+
+apiv2_payroll_run:
+  path: /api/v2/payroll/runs/{id}
+  controller: OrangeHRM\Core\Controller\Rest\V2\GenericRestController::handle
+  methods: [GET, PUT]
+  defaults:
+    _api: OrangeHRM\Payroll\Api\PayrollRunAPI
+  requirements:
+    id: '\d+'
+
+apiv2_payroll_run_operations:
+  path: /api/v2/payroll/runs/{id}/operations
+  controller: OrangeHRM\Core\Controller\Rest\V2\GenericRestController::handle
+  methods: [POST]
+  defaults:
+    _api: OrangeHRM\Payroll\Api\PayrollRunOperationAPI
+  requirements:
+    id: '\d+'
+
+apiv2_payroll_payslips:
+  path: /api/v2/payroll/payslips
+  controller: OrangeHRM\Core\Controller\Rest\V2\GenericRestController::handle
+  methods: [GET]
+  defaults:
+    _api: OrangeHRM\Payroll\Api\PayrollPayslipAPI
+
+apiv2_payroll_email_logs:
+  path: /api/v2/payroll/email-logs
+  controller: OrangeHRM\Core\Controller\Rest\V2\GenericRestController::handle
+  methods: [GET]
+  defaults:
+    _api: OrangeHRM\Payroll\Api\PayrollEmailLogAPI
+
+apiv2_payroll_config:
+  path: /api/v2/payroll/config/{id}
+  controller: OrangeHRM\Core\Controller\Rest\V2\GenericRestController::handle
+  methods: [GET, PUT]
+  defaults:
+    _api: OrangeHRM\Payroll\Api\PayrollConfigAPI
+  requirements:
+    id: '1'
+
+payroll_module:
+  path: /payroll/viewPayrollModule
+  controller: OrangeHRM\Payroll\Controller\PayrollModuleController::handle
+  methods: [GET]
+
+view_payroll:
+  path: /payroll/viewPayroll
+  controller: OrangeHRM\Payroll\Controller\PayrollRunsController::handle
+  methods: [GET]

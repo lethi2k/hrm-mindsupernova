@@ -112,6 +112,15 @@ class Mail implements \OrangeHRM\Core\Mail\Mail
      */
     private ?string $contentType;
 
+    /**
+     * File attachments: list of ['path' => string, 'name' => string] for attachFromPath
+     *
+     * @var array|null
+     *
+     * @ORM\Column(name="attachments", type="array", nullable=true)
+     */
+    private ?array $attachments = null;
+
     public function __construct()
     {
         $this->createdAt = $this->getDateTimeHelper()->getNow();
@@ -290,5 +299,21 @@ class Mail implements \OrangeHRM\Core\Mail\Mail
         }
 
         $this->contentType = $contentType;
+    }
+
+    /**
+     * @return array<int, array{path: string, name?: string}>|null
+     */
+    public function getAttachments(): ?array
+    {
+        return $this->attachments;
+    }
+
+    /**
+     * @param array<int, array{path: string, name?: string}>|null $attachments
+     */
+    public function setAttachments(?array $attachments): void
+    {
+        $this->attachments = $attachments;
     }
 }

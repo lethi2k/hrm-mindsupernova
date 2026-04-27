@@ -112,6 +112,11 @@ class EmailService
     private array $messageBcc;
 
     /**
+     * @var array<int, array{path: string, name?: string}>
+     */
+    private array $messageAttachments = [];
+
+    /**
      * @var Mailer
      */
     protected Mailer $mailer;
@@ -123,6 +128,7 @@ class EmailService
 
     public function __construct()
     {
+        $this->messageAttachments = [];
         $this->loadConfiguration();
     }
 
@@ -235,6 +241,22 @@ class EmailService
     public function setMessageBcc($messageBcc)
     {
         $this->messageBcc = $messageBcc;
+    }
+
+    /**
+     * @param array<int, array{path: string, name?: string}> $attachments
+     */
+    public function setMessageAttachments(array $attachments): void
+    {
+        $this->messageAttachments = $attachments;
+    }
+
+    /**
+     * @return array<int, array{path: string, name?: string}>
+     */
+    public function getMessageAttachments(): array
+    {
+        return $this->messageAttachments;
     }
 
     /**
@@ -372,6 +394,14 @@ class EmailService
 
         if (!empty($this->messageBcc)) {
             $message->setBcc($this->messageBcc);
+        }
+
+        foreach ($this->messageAttachments as $file) {
+            if (!empty($file['path']) && is_readable($file['path'])) {
+                $name = $file['name'] ?? null;
+                $name = $name !== null && $name !== '' ? $name : basename($file['path']);
+                $message->attachFromPath($file['path'], $name);
+            }
         }
         return $message;
     }
