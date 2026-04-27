@@ -1,0 +1,25 @@
+IndexIgnore *
+Options All -Indexes
+RedirectMatch 404 /\..*$
+
+<Files log.txt>
+Require all denied
+</Files>
+<Files *.log>
+Require all denied
+</Files>
+<Files log*.txt>
+Require all denied
+</Files>
+<Files *.yml>
+Require all denied
+</Files>
+<FilesMatch "(\.(bak|config|dist|inc|swp|xml|sql|sh|xsl|conf|ini|json)|~)$">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  RewriteRule (/)?(build|devTools|lib|license|tests|test|apps|cache|config|data|log|plugins)(/.*)?$ - [F,NC]
+</IfModule>
