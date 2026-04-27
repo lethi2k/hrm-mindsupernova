@@ -82,10 +82,9 @@
         />
       </oxd-grid-item>
       <oxd-grid-item class="--offset-row-3">
-        <oxd-input-field
+        <password-input-field
           v-model="database.dbPassword"
           label="Database User Password"
-          type="password"
         />
       </oxd-grid-item>
     </oxd-grid>
@@ -123,10 +122,12 @@ import {required, validRange} from '@/core/util/validation/rules';
 import {APIService} from '@/core/util/services/api.service';
 import {navigate} from '@/core/util/helper/navigation.ts';
 import Notice from '@/components/Notice.vue';
+import PasswordInputField from '@/components/PasswordInputField.vue';
 export default {
   name: 'DatabaseConfigScreen',
   components: {
     Notice,
+    'password-input-field': PasswordInputField,
   },
   setup() {
     const http = new APIService(

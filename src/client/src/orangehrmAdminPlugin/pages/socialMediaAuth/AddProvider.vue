@@ -52,11 +52,10 @@
               />
             </oxd-grid-item>
             <oxd-grid-item>
-              <oxd-input-field
+              <password-input-field
                 v-model="authProvider.clientSecret"
                 :rules="rules.clientSecret"
                 :label="$t('admin.client_secret')"
-                type="password"
                 required
               />
             </oxd-grid-item>
@@ -87,6 +86,7 @@ import {
   shouldNotExceedCharLength,
 } from '@ohrm/core/util/validation/rules';
 import useServerValidation from '@/core/util/composable/useServerValidation';
+import PasswordInputField from '@/core/components/inputs/PasswordInputField';
 
 const initialAuthProvider = {
   name: '',
@@ -97,6 +97,9 @@ const initialAuthProvider = {
 
 export default {
   name: 'AddProvider',
+  components: {
+    'password-input-field': PasswordInputField,
+  },
 
   setup() {
     const http = new APIService(

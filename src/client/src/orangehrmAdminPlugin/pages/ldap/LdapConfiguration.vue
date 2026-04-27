@@ -108,9 +108,8 @@
               />
             </oxd-grid-item>
             <oxd-grid-item>
-              <oxd-input-field
+              <password-input-field
                 v-model="configuration.bindUserPassword"
-                type="password"
                 :label="$t('general.password')"
                 :placeholder="passwordPlaceHolder"
                 :rules="rules.bindUserPassword"
@@ -385,6 +384,7 @@ import {APIService} from '@ohrm/core/util/services/api.service';
 import LdapSyncConnection from '@/orangehrmAdminPlugin/components/LdapSyncConnection';
 import LdapTestConnectionModal from '@/orangehrmAdminPlugin/components/LdapTestConnectionModal';
 import {OxdAlert, OxdIcon, OxdSwitchInput} from '@ohrm/oxd';
+import PasswordInputField from '@/core/components/inputs/PasswordInputField';
 
 const configurationModel = {
   enable: false,
@@ -422,6 +422,7 @@ export default {
     'oxd-switch-input': OxdSwitchInput,
     'ldap-sync-connection': LdapSyncConnection,
     'ldap-test-connection-modal': LdapTestConnectionModal,
+    'password-input-field': PasswordInputField,
   },
 
   props: {

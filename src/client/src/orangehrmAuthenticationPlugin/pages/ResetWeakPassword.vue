@@ -55,11 +55,10 @@
               />
             </oxd-form-row>
             <oxd-form-row>
-              <oxd-input-field
+              <password-input-field
                 v-model="user.currentPassword"
                 :rules="rules.currentPassword"
                 :label="$t('pim.current_password')"
-                type="password"
                 label-icon="key"
                 autocomplete="off"
                 name="currentPassword"
@@ -71,24 +70,22 @@
                 :password-strength="passwordStrength"
               >
               </password-strength-indicator>
-              <oxd-input-field
+              <password-input-field
                 v-model="user.newPassword"
                 :rules="rules.newPassword"
                 :label="$t('auth.new_password')"
                 :placeholder="$t('auth.password')"
                 name="password"
-                type="password"
                 label-icon="key"
                 autocomplete="off"
               />
             </oxd-form-row>
             <oxd-form-row>
-              <oxd-input-field
+              <password-input-field
                 v-model="user.confirmPassword"
                 :rules="rules.confirmPassword"
                 :placeholder="$t('auth.password')"
                 :label="$t('general.confirm_password')"
-                type="password"
                 label-icon="key"
                 autocomplete="off"
                 name="confirmPassword"
@@ -122,6 +119,7 @@ import {urlFor} from '@/core/util/helper/url';
 import {APIService} from '@/core/util/services/api.service';
 import usePasswordPolicy from '@/core/util/composable/usePasswordPolicy';
 import PasswordStrengthIndicator from '@/core/components/labels/PasswordStrengthIndicator';
+import PasswordInputField from '@/core/components/inputs/PasswordInputField';
 
 export default {
   name: 'ResetWeakPassword',
@@ -129,6 +127,7 @@ export default {
   components: {
     'password-strength-indicator': PasswordStrengthIndicator,
     'oxd-alert': OxdAlert,
+    'password-input-field': PasswordInputField,
   },
 
   props: {

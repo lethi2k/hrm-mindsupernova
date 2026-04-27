@@ -132,11 +132,10 @@
               />
             </oxd-grid-item>
             <oxd-grid-item>
-              <oxd-input-field
+              <password-input-field
                 v-model="emailConfiguration.smtpPassword"
                 :label="$t('admin.smtp_password')"
                 :rules="rules.smtpPassword"
-                type="password"
                 :placeholder="passwordPlaceHolder"
                 required
               />
@@ -222,10 +221,12 @@ import {
   shouldNotExceedCharLength,
 } from '@ohrm/core/util/validation/rules';
 import {OxdSwitchInput} from '@ohrm/oxd';
+import PasswordInputField from '@/core/components/inputs/PasswordInputField';
 
 export default {
   components: {
     'oxd-switch-input': OxdSwitchInput,
+    'password-input-field': PasswordInputField,
   },
   props: {
     pathToSendmail: {

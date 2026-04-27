@@ -37,9 +37,8 @@
             </oxd-grid-item>
 
             <oxd-grid-item>
-              <oxd-input-field
+              <password-input-field
                 v-model="user.currentPassword"
-                type="password"
                 :label="$t('pim.current_password')"
                 :rules="rules.currentPassword"
                 required
@@ -78,6 +77,7 @@ import useForm from '@/core/util/composable/useForm';
 import {APIService} from '@/core/util/services/api.service';
 import {navigate} from '@ohrm/core/util/helper/navigation';
 import PasswordInput from '@/core/components/inputs/PasswordInput';
+import PasswordInputField from '@/core/components/inputs/PasswordInputField';
 
 const userModel = {
   currentPassword: '',
@@ -88,6 +88,7 @@ const userModel = {
 export default {
   components: {
     'password-input': PasswordInput,
+    'password-input-field': PasswordInputField,
   },
   props: {
     userName: {

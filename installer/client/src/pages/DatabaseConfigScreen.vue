@@ -102,10 +102,9 @@
           />
         </oxd-grid-item>
         <oxd-grid-item>
-          <oxd-input-field
+          <password-input-field
             v-model="database.dbPassword"
             label="Privileged Database User Password"
-            type="password"
           />
         </oxd-grid-item>
       </template>
@@ -123,11 +122,10 @@
         />
       </oxd-grid-item>
       <oxd-grid-item>
-        <oxd-input-field
+        <password-input-field
           v-model="database.ohrmDbPassword"
           :disabled="disableOHRMDBfield"
           label="OrangeHRM Database User Password"
-          type="password"
         />
       </oxd-grid-item>
     </oxd-grid>
@@ -181,11 +179,13 @@ import {APIService} from '@/core/util/services/api.service';
 import {navigate} from '@/core/util/helper/navigation.ts';
 import tooltipDirective from '@/core/util/directives/tooltip';
 import {OxdRadioInput} from '@ohrm/oxd';
+import PasswordInputField from '@/components/PasswordInputField.vue';
 
 export default {
   name: 'DatabaseConfigScreen',
   components: {
     'oxd-radio-input': OxdRadioInput,
+    'password-input-field': PasswordInputField,
   },
   directives: {
     tooltip: tooltipDirective,

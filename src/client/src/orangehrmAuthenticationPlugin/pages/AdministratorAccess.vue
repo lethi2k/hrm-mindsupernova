@@ -56,12 +56,11 @@
           />
         </oxd-form-row>
         <oxd-form-row>
-          <oxd-input-field
+          <password-input-field
             v-model="password"
             name="password"
             :label="$t('general.password')"
             label-icon="key"
-            type="password"
             :rules="rules.password"
             autofocus
           />
@@ -94,12 +93,14 @@ import {urlFor} from '@ohrm/core/util/helper/url';
 import {navigate} from '@/core/util/helper/navigation';
 import {required} from '@/core/util/validation/rules';
 import {OxdAlert} from '@ohrm/oxd';
+import PasswordInputField from '@/core/components/inputs/PasswordInputField';
 
 export default {
   name: 'AdministratorAccess',
 
   components: {
     'oxd-alert': OxdAlert,
+    'password-input-field': PasswordInputField,
   },
 
   props: {

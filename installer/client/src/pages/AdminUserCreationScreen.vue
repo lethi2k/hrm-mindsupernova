@@ -73,18 +73,16 @@
         />
       </oxd-grid-item>
       <oxd-grid-item class="--offset-row-4">
-        <oxd-input-field
+        <password-input-field
           v-model="adminUser.password"
-          type="password"
           label="Password"
           :rules="rules.password"
           required
         />
       </oxd-grid-item>
       <oxd-grid-item class="--offset-row-4">
-        <oxd-input-field
+        <password-input-field
           v-model="adminUser.confirmPassword"
-          type="password"
           label="Confirm Password"
           :rules="rules.passwordConfirm"
           required
@@ -139,11 +137,13 @@ import {navigate} from '@/core/util/helper/navigation';
 import {checkPassword} from '@/core/util/helper/password';
 import {APIService} from '@/core/util/services/api.service';
 import {OxdIcon} from '@ohrm/oxd';
+import PasswordInputField from '@/components/PasswordInputField.vue';
 
 export default {
   name: 'AdminUserCreation',
   components: {
     'oxd-icon': OxdIcon,
+    'password-input-field': PasswordInputField,
   },
   setup() {
     const http = new APIService(

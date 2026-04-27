@@ -27,8 +27,7 @@
           :password-strength="passwordStrength"
         >
         </password-strength-indicator>
-        <oxd-input-field
-          type="password"
+        <password-input-field
           autocomplete="off"
           :required="isPasswordRequired"
           :model-value="password"
@@ -42,9 +41,8 @@
       </oxd-grid-item>
 
       <oxd-grid-item>
-        <oxd-input-field
+        <password-input-field
           ref="passwordConfirm"
-          type="password"
           autocomplete="off"
           :required="isPasswordRequired"
           :model-value="passwordConfirm"
@@ -66,11 +64,13 @@ import {promiseDebounce} from '@ohrm/oxd';
 import {APIService} from '@/core/util/services/api.service';
 import usePasswordPolicy from '@/core/util/composable/usePasswordPolicy';
 import PasswordStrengthIndicator from '@/core/components/labels/PasswordStrengthIndicator';
+import PasswordInputField from '@/core/components/inputs/PasswordInputField';
 
 export default {
   name: 'PasswordInput',
   components: {
     'password-strength-indicator': PasswordStrengthIndicator,
+    'password-input-field': PasswordInputField,
   },
   props: {
     password: {

@@ -59,13 +59,12 @@
         </oxd-form-row>
 
         <oxd-form-row>
-          <oxd-input-field
+          <password-input-field
             v-model="password"
             name="password"
             :label="$t('general.password')"
             label-icon="key"
             :placeholder="$t('auth.password')"
-            type="password"
             :rules="rules.password"
           />
         </oxd-form-row>
@@ -119,6 +118,7 @@ import {required} from '@ohrm/core/util/validation/rules';
 import {navigate, reloadPage} from '@ohrm/core/util/helper/navigation';
 import LoginLayout from '@/orangehrmAuthenticationPlugin/components/LoginLayout.vue';
 import SocialMediaAuth from '@/orangehrmAuthenticationPlugin/components/SocialMediaAuth.vue';
+import PasswordInputField from '@/core/components/inputs/PasswordInputField';
 
 export default {
   components: {
@@ -127,6 +127,7 @@ export default {
     'oxd-sheet': OxdSheet,
     'login-layout': LoginLayout,
     'social-media-auth': SocialMediaAuth,
+    'password-input-field': PasswordInputField,
   },
 
   props: {
