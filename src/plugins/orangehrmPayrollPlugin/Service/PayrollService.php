@@ -23,6 +23,7 @@ use DateTime;
 use Exception;
 use OrangeHRM\Admin\Service\OrganizationService;
 use OrangeHRM\Core\Service\EmailQueueService;
+use OrangeHRM\Core\Service\EmailService;
 use OrangeHRM\Core\Traits\CacheTrait;
 use OrangeHRM\Core\Traits\ORM\EntityManagerHelperTrait;
 use OrangeHRM\Core\Traits\Service\DateTimeHelperTrait;
@@ -264,7 +265,8 @@ class PayrollService
                 continue;
             }
 
-            $out = $this->getPayslipFileService()->generatePayslipFile($payslip, $emp, $ymLabel);
+            $extraData = $this->buildPayslipExtraData($payslip, $emp);
+            $out = $this->getPayslipFileService()->generatePayslipFile($payslip, $emp, $ymLabel, $extraData);
             $payslip->setFilePath($out['path']);
             $payslip->setFileChecksum($out['checksum']);
             $this->getPayrollDao()->savePayslip($payslip);
@@ -422,7 +424,8 @@ class PayrollService
             'yearMonth' => $ymLabel,
             'netSalary' => (string) $payslip->getNetSalary(),
         ]));
-        $out = $this->getPayslipFileService()->generatePayslipFile($payslip, $emp, $ymLabel);
+        $extraData = $this->buildPayslipExtraData($payslip, $emp);
+        $out = $this->getPayslipFileService()->generatePayslipFile($payslip, $emp, $ymLabel, $extraData);
         $ext = $payslip->getFileFormat() === PayrollPayslip::FORMAT_PDF ? '.pdf' : '.xlsx';
         $file = $this->safeFilename($this->formatEmployeeName($emp)) . $ext;
         $oldLog->setMailQueueId(null);
@@ -499,6 +502,110 @@ class PayrollService
     {
         $s = preg_replace('/[^A-Za-z0-9\p{L}_\-\.]+/u', '-', $name) ?: 'employee';
         return trim($s, '-');
+    }
+
+    private function buildPayslipExtraData(PayrollPayslip $payslip, Employee $emp): array
+    {
+        $baseSalary = $this->resolveBaseSalary($emp->getEmpNumber());
+        $standardWorkingDays = 22;
+        $run = $payslip->getPayrollRun();
+        $summary = $this->getPayrollDao()->getEmployeeTimesheetSummaryByMonth(
+            $emp->getEmpNumber(),
+            $run->getYearMonth()
+        );
+        $actualWorkingDays = (float) ($summary['regularSeconds'] ?? 0) / (8 * 3600);
+        return [
+            'baseSalary'          => $baseSalary,
+            'standardWorkingDays' => $standardWorkingDays,
+            'actualWorkingDays'   => $actualWorkingDays,
+            'nationalId'          => $emp->getDrivingLicenseNo() ?? '',
+            'jobTitle'            => $emp->getJobTitle()?->getJobTitleName() ?? '',
+        ];
+    }
+
+    private function resolveBaseSalary(int $empNumber): float
+    {
+        $salaries = $this->getPayrollDao()->getEmployeeSalaries($empNumber);
+        $parse = static function (?string $raw): ?float {
+            if ($raw === null) {
+                return null;
+            }
+            $normalized = preg_replace('/[^0-9.\-]/', '', str_replace([',', ' '], '', trim($raw))) ?? '';
+            return ($normalized !== '' && is_numeric($normalized)) ? (float) $normalized : null;
+        };
+        foreach ($salaries as $salary) {
+            $name = mb_strtolower((string) ($salary->getSalaryName() ?? ''), 'UTF-8');
+            if (
+                strpos($name, 'base') !== false || strpos($name, 'basic') !== false
+                || strpos($name, 'luong co ban') !== false || strpos($name, 'lương cơ bản') !== false
+            ) {
+                $amount = $parse($salary->getAmount());
+                if ($amount !== null) {
+                    return $amount;
+                }
+            }
+        }
+        foreach ($salaries as $salary) {
+            $amount = $parse($salary->getAmount());
+            if ($amount !== null) {
+                return $amount;
+            }
+        }
+        return 0.0;
+    }
+
+    public function sendTestEmail(int $runId, string $fileFormat, string $testEmailAddr): string
+    {
+        if (!in_array($fileFormat, [PayrollPayslip::FORMAT_XLSX, PayrollPayslip::FORMAT_PDF], true)) {
+            throw new Exception('Invalid file format');
+        }
+        if (!filter_var($testEmailAddr, FILTER_VALIDATE_EMAIL)) {
+            throw new Exception('Invalid test email address');
+        }
+        $run = $this->getPayrollDao()->getRun($runId);
+        if ($run === null) {
+            throw new Exception('Payroll run not found');
+        }
+        $config = $this->getOrCreateConfig();
+        $ymLabel = $this->formatYearMonth($run->getYearMonth());
+        $company = $this->getOrganizationService()->getOrganizationGeneralInformation();
+        $companyName = $company?->getName() ?? 'Company';
+
+        $payslips = $this->getPayrollDao()->getPayslipsForRun($run->getId(), 0, 1);
+        if (empty($payslips)) {
+            throw new Exception('No payslips found for this run. Please complete the review step first.');
+        }
+        $payslip = $payslips[0];
+        $payslip->setFileFormat($fileFormat);
+        $emp = $this->getPayrollDao()->getEmployeeByNumber($payslip->getEmpNumber());
+        if ($emp === null) {
+            throw new Exception('Employee not found');
+        }
+        $empName = $this->formatEmployeeName($emp);
+        $tokens = [
+            'companyName' => $companyName,
+            'employeeName' => $empName,
+            'yearMonth' => $ymLabel,
+            'netSalary' => (string) $payslip->getNetSalary(),
+        ];
+        $subject = '[TEST] ' . $this->interpolate($config->getDefaultSubject(), $tokens);
+        $body = nl2br($this->interpolate($config->getDefaultBody(), $tokens));
+        $extraData = $this->buildPayslipExtraData($payslip, $emp);
+        $out = $this->getPayslipFileService()->generatePayslipFile($payslip, $emp, $ymLabel, $extraData);
+        $fileName = $this->safeFilename($empName) . ($fileFormat === PayrollPayslip::FORMAT_PDF ? '.pdf' : '.xlsx');
+        $emailService = new EmailService();
+        if (!$emailService->isConfigSet()) {
+            throw new Exception('Email chưa được cấu hình. Vui lòng cấu hình SMTP tại Admin → Configuration → Email Configuration.');
+        }
+        $emailService->setMessageSubject($subject);
+        $emailService->setMessageBody($body);
+        $emailService->setMessageTo([$testEmailAddr]);
+        $emailService->setMessageAttachments([['path' => $out['path'], 'name' => $fileName]]);
+        $sent = $emailService->sendEmail();
+        if (!$sent) {
+            throw new Exception('Gửi email thất bại. Vui lòng kiểm tra cấu hình SMTP.');
+        }
+        return 'Email thử nghiệm đã được gửi thành công đến ' . $testEmailAddr;
     }
 
     public function scheduledAutoSendForPreviousMonthIfDue(): int

@@ -53,6 +53,12 @@ class Migration extends AbstractMigration
             if (!$this->getSchemaHelper()->columnExists('ohrm_payroll_run', 'reviewed_at')) {
                 $this->getSchemaHelper()->addColumn('ohrm_payroll_run', 'reviewed_at', Types::DATETIME_MUTABLE, ['Notnull' => false]);
             }
+            if (!$this->getSchemaHelper()->columnExists('ohrm_payroll_run', 'approved_by')) {
+                $this->getSchemaHelper()->addColumn('ohrm_payroll_run', 'approved_by', Types::INTEGER, ['Notnull' => false]);
+            }
+            if (!$this->getSchemaHelper()->columnExists('ohrm_payroll_run', 'approved_at')) {
+                $this->getSchemaHelper()->addColumn('ohrm_payroll_run', 'approved_at', Types::DATETIME_MUTABLE, ['Notnull' => false]);
+            }
         }
 
         if (!$this->getSchemaHelper()->tableExists(['ohrm_payroll_run'])) {
@@ -63,6 +69,8 @@ class Migration extends AbstractMigration
                 ->addColumn('created_by', Types::INTEGER, ['Notnull' => true])
                 ->addColumn('reviewed_by', Types::INTEGER, ['Notnull' => false])
                 ->addColumn('reviewed_at', Types::DATETIME_MUTABLE, ['Notnull' => false])
+                ->addColumn('approved_by', Types::INTEGER, ['Notnull' => false])
+                ->addColumn('approved_at', Types::DATETIME_MUTABLE, ['Notnull' => false])
                 ->addColumn('created_at', Types::DATETIME_MUTABLE, ['Notnull' => true])
                 ->addColumn('updated_at', Types::DATETIME_MUTABLE, ['Notnull' => true])
                 ->setPrimaryKey(['id'])

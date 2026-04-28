@@ -227,7 +227,7 @@
                   v-model.number="row.allowance"
                   type="number"
                   min="0"
-                  step="0.01"
+                  step="1"
                   class="oxd-input oxd-input--active payroll-base-salary-input"
                   :disabled="
                     reviewLoading ||
@@ -278,34 +278,93 @@
   <teleport to="#app">
     <oxd-dialog
       v-if="showSendDialog"
-      :style="{maxWidth: '480px'}"
+      :style="{maxWidth: '780px', width: '100%'}"
       @update:show="closeSendDialog"
     >
       <div class="orangehrm-modal-header">
-        <oxd-text type="card-title">
-          {{ $t('payroll.send_payslips') }}
-        </oxd-text>
+        <oxd-text type="card-title">{{ $t('payroll.send_payslips') }}</oxd-text>
       </div>
 
       <oxd-divider />
 
-      <oxd-text tag="p" class="orangehrm-text">
-        {{ $t('payroll.send_payslip_format') }}
-      </oxd-text>
-
-      <div class="payroll-format-row">
-        <label class="payroll-format-option">
-          <input v-model="sendFormat" type="radio" value="xlsx" />
-
-          {{ $t('payroll.format_xlsx') }}
-        </label>
-
-        <label class="payroll-format-option">
-          <input v-model="sendFormat" type="radio" value="pdf" />
-
-          {{ $t('payroll.format_pdf') }}
-        </label>
+      <!-- Format selection -->
+      <div class="send-section">
+        <oxd-text tag="p" class="send-section-label">{{
+          $t('payroll.send_payslip_format')
+        }}</oxd-text>
+        <div class="payroll-format-row">
+          <label class="payroll-format-option">
+            <input v-model="sendFormat" type="radio" value="xlsx" />
+            Excel (XLSX)
+          </label>
+          <label class="payroll-format-option">
+            <input v-model="sendFormat" type="radio" value="pdf" />
+            PDF
+          </label>
+        </div>
       </div>
+
+      <oxd-divider />
+
+      <!-- Email preview -->
+      <div class="send-section">
+        <oxd-text tag="p" class="send-section-label">Xem trước email</oxd-text>
+        <div v-if="emailConfigLoading" class="send-loading">Đang tải...</div>
+        <div v-else class="email-preview-box">
+          <div class="email-preview-row">
+            <span class="email-preview-key">Tiêu đề:</span>
+            <span class="email-preview-val">{{
+              emailConfig.defaultSubject || '(chưa cấu hình)'
+            }}</span>
+          </div>
+          <div class="email-preview-row email-preview-body-row">
+            <span class="email-preview-key">Nội dung:</span>
+            <pre class="email-preview-body">{{
+              emailConfig.defaultBody || '(chưa cấu hình)'
+            }}</pre>
+          </div>
+          <p class="email-preview-hint">
+            Biến: <code>&#123;&#123;companyName&#125;&#125;</code>
+            <code>&#123;&#123;employeeName&#125;&#125;</code>
+            <code>&#123;&#123;yearMonth&#125;&#125;</code>
+            <code>&#123;&#123;netSalary&#125;&#125;</code>
+          </p>
+        </div>
+      </div>
+
+      <oxd-divider />
+
+      <!-- Test email -->
+      <div class="send-section">
+        <oxd-text tag="p" class="send-section-label"
+          >Gửi email thử nghiệm</oxd-text
+        >
+        <div class="test-email-row">
+          <input
+            v-model="testEmailAddr"
+            type="email"
+            placeholder="Nhập địa chỉ email thử nghiệm..."
+            class="oxd-input oxd-input--active test-email-input"
+          />
+          <oxd-button
+            display-type="secondary"
+            :label="testEmailSending ? 'Đang gửi...' : 'Gửi thử'"
+            :disabled="testEmailSending || !testEmailAddr"
+            @click="sendTestEmail"
+          />
+        </div>
+        <div
+          v-if="testEmailResult"
+          :class="[
+            'test-email-result',
+            testEmailResult.ok ? 'test-email-ok' : 'test-email-err',
+          ]"
+        >
+          {{ testEmailResult.msg }}
+        </div>
+      </div>
+
+      <oxd-divider />
 
       <div class="orangehrm-modal-footer">
         <oxd-button
@@ -314,7 +373,6 @@
           :label="$t('general.cancel')"
           @click="closeSendDialog"
         />
-
         <oxd-button
           display-type="secondary"
           class="orangehrm-button-margin"
@@ -368,6 +426,12 @@ export default {
     const showSendDialog = ref(false);
 
     const sendFormat = ref('xlsx');
+
+    const emailConfig = ref({defaultSubject: '', defaultBody: ''});
+    const emailConfigLoading = ref(false);
+    const testEmailAddr = ref('');
+    const testEmailSending = ref(false);
+    const testEmailResult = ref(null);
 
     const pendingSendRunId = ref(null);
     const reviewRunId = ref(null);
@@ -435,6 +499,12 @@ export default {
 
       sendFormat,
 
+      emailConfig,
+      emailConfigLoading,
+      testEmailAddr,
+      testEmailSending,
+      testEmailResult,
+
       pendingSendRunId,
       reviewRunId,
       reviewRows,
@@ -486,35 +556,81 @@ export default {
       this.load();
     },
 
-    openSendDialog(row) {
+    async openSendDialog(row) {
       if (!row.reviewConfirmed) {
         return;
       }
       this.pendingSendRunId = row.id;
-
       this.sendFormat = 'xlsx';
-
+      this.testEmailAddr = '';
+      this.testEmailResult = null;
       this.showSendDialog = true;
+      await this.fetchEmailConfig();
+    },
+
+    async fetchEmailConfig() {
+      this.emailConfigLoading = true;
+      this.emailConfig = {defaultSubject: '', defaultBody: ''};
+      try {
+        const http = new APIService(
+          window.appGlobal.baseUrl,
+          `/api/v2/payroll/runs/${this.pendingSendRunId}/operations`,
+        );
+        const res = await http.create({action: 'getEmailConfig'});
+        const d = res?.data?.data ?? {};
+        this.emailConfig = {
+          defaultSubject: d.defaultSubject ?? '',
+          defaultBody: d.defaultBody ?? '',
+        };
+      } finally {
+        this.emailConfigLoading = false;
+      }
     },
 
     closeSendDialog() {
       this.showSendDialog = false;
-
       this.pendingSendRunId = null;
+      this.testEmailResult = null;
     },
 
     async confirmSend() {
       if (!this.pendingSendRunId) {
         return;
       }
-
       const id = this.pendingSendRunId;
-
       this.showSendDialog = false;
-
       this.pendingSendRunId = null;
-
+      this.testEmailResult = null;
       await this.doOp(id, 'send', {fileFormat: this.sendFormat});
+    },
+
+    async sendTestEmail() {
+      if (!this.testEmailAddr || !this.pendingSendRunId) return;
+      this.testEmailSending = true;
+      this.testEmailResult = null;
+      try {
+        const http = new APIService(
+          window.appGlobal.baseUrl,
+          `/api/v2/payroll/runs/${this.pendingSendRunId}/operations`,
+        );
+        await http.create({
+          action: 'testEmail',
+          fileFormat: this.sendFormat,
+          testEmailAddr: this.testEmailAddr,
+        });
+        this.testEmailResult = {
+          ok: true,
+          msg: `Email thử nghiệm đã được xếp hàng gửi đến ${this.testEmailAddr}`,
+        };
+      } catch (e) {
+        const msg =
+          e?.response?.data?.error?.message ??
+          e?.message ??
+          'Lỗi không xác định';
+        this.testEmailResult = {ok: false, msg: `Gửi thất bại: ${msg}`};
+      } finally {
+        this.testEmailSending = false;
+      }
     },
 
     async openReviewPanel(runId) {
@@ -829,13 +945,13 @@ export default {
         standardWorkingDays > 0
           ? (baseSalary / standardWorkingDays) * actualWorkingDays
           : 0;
-      row.actualSalary = Number(actualSalary.toFixed(2));
-      row.totalSalary = Number((actualSalary + allowance).toFixed(2));
+      row.actualSalary = Math.round(actualSalary);
+      row.totalSalary = Math.round(actualSalary + allowance);
     },
 
     formatMoney(value) {
-      const number = Number(value ?? 0);
-      return number.toFixed(2);
+      const number = Math.round(Number(value ?? 0));
+      return number.toLocaleString('vi-VN');
     },
 
     async loadEmailLogs(runId) {
@@ -1039,5 +1155,180 @@ export default {
 
 .orangehrm-modal-footer {
   gap: 0.75rem;
+}
+
+/* Send payslips dialog */
+.send-section {
+  padding: 1rem 1.5rem;
+}
+
+.send-section-label {
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.75rem;
+}
+
+.send-loading {
+  color: #64728c;
+  font-size: 0.875rem;
+  padding: 0.5rem 0;
+}
+
+/* Format radio buttons */
+.payroll-format-row {
+  display: flex;
+  gap: 1rem;
+  margin: 0.25rem 0 0;
+}
+
+.payroll-format-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.25rem;
+  border: 2px solid #e8eaef;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #374151;
+  font-weight: 500;
+  transition: border-color 0.15s, background 0.15s;
+  user-select: none;
+
+  &:has(input:checked) {
+    border-color: #f97316;
+    background: #fff7ed;
+    color: #c2410c;
+  }
+
+  input[type='radio'] {
+    accent-color: #f97316;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* Email preview */
+.email-preview-box {
+  background: #f8fafc;
+  border-radius: 0.625rem;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+
+.email-preview-row {
+  display: flex;
+  gap: 0;
+  font-size: 0.875rem;
+  border-bottom: 1px solid #e2e8f0;
+
+  &:last-of-type {
+    border-bottom: none;
+  }
+}
+
+.email-preview-key {
+  flex-shrink: 0;
+  width: 80px;
+  padding: 0.6rem 0.75rem;
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: #64728c;
+  background: #f1f5f9;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  align-items: flex-start;
+  padding-top: 0.7rem;
+}
+
+.email-preview-val {
+  flex: 1;
+  padding: 0.65rem 0.875rem;
+  color: #1e293b;
+  font-weight: 500;
+}
+
+.email-preview-body {
+  flex: 1;
+  margin: 0;
+  padding: 0.65rem 0.875rem;
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: #374151;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.6;
+}
+
+.email-preview-hint {
+  padding: 0.5rem 0.75rem;
+  margin: 0;
+  font-size: 0.76rem;
+  color: #94a3b8;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+}
+
+.email-preview-hint code {
+  background: #e2e8f0;
+  border-radius: 3px;
+  padding: 1px 5px;
+  margin: 0 2px;
+  font-size: 0.76rem;
+  color: #475569;
+}
+
+/* Test email */
+.test-email-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.test-email-input {
+  flex: 1;
+  height: 38px;
+  padding: 0 0.875rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: #1e293b;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &:focus {
+    border-color: #f97316;
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.12);
+  }
+
+  &::placeholder {
+    color: #cbd5e1;
+  }
+}
+
+.test-email-result {
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  padding: 0.625rem 0.875rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.test-email-ok {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.test-email-err {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
 }
 </style>

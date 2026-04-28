@@ -47,6 +47,9 @@ class PayrollRunOperationAPI extends Endpoint implements CollectionEndpoint
     public const OP_SYNC = 'syncQueue';
     public const OP_CONFIRM_REVIEW = 'confirmReview';
     public const OP_GET_REVIEW_SNAPSHOT = 'getReviewSnapshot';
+    public const OP_TEST_EMAIL = 'testEmail';
+    public const TEST_EMAIL_ADDR = 'testEmailAddr';
+    public const OP_GET_EMAIL_CONFIG = 'getEmailConfig';
     public const REVIEW_ROWS = 'reviewRows';
     public const REVIEW_ROWS_JSON = 'reviewRowsJson';
 
@@ -108,6 +111,27 @@ class PayrollRunOperationAPI extends Endpoint implements CollectionEndpoint
             } elseif ($action === self::OP_GET_REVIEW_SNAPSHOT) {
                 $snapshot = $this->getPayrollDao()->getPayslipAmountMapForRun($id);
                 return new EndpointResourceResult(ArrayModel::class, ['runId' => $id, 'snapshot' => $snapshot]);
+            } elseif ($action === self::OP_GET_EMAIL_CONFIG) {
+                $config = $this->getPayrollService()->getOrCreateConfig();
+                return new EndpointResourceResult(ArrayModel::class, [
+                    'defaultSubject' => $config->getDefaultSubject(),
+                    'defaultBody'    => $config->getDefaultBody(),
+                ]);
+            } elseif ($action === self::OP_TEST_EMAIL) {
+                $fmt = $this->getRequestParams()->getString(
+                    RequestParams::PARAM_TYPE_BODY,
+                    self::FORMAT,
+                    PayrollPayslip::FORMAT_XLSX
+                );
+                if ($fmt !== PayrollPayslip::FORMAT_XLSX && $fmt !== PayrollPayslip::FORMAT_PDF) {
+                    $fmt = PayrollPayslip::FORMAT_XLSX;
+                }
+                $testAddr = $this->getRequestParams()->getString(
+                    RequestParams::PARAM_TYPE_BODY,
+                    self::TEST_EMAIL_ADDR
+                );
+                $msg = $this->getPayrollService()->sendTestEmail($id, $fmt, $testAddr);
+                return new EndpointResourceResult(ArrayModel::class, ['message' => $msg]);
             } else {
                 $this->throwNotImplementedException();
             }
@@ -143,6 +167,12 @@ class PayrollRunOperationAPI extends Endpoint implements CollectionEndpoint
             $this->getValidationDecorator()->notRequiredParamRule(
                 new ParamRule(
                     self::REVIEW_ROWS_JSON,
+                    new Rule(Rules::STRING_TYPE)
+                )
+            ),
+            $this->getValidationDecorator()->notRequiredParamRule(
+                new ParamRule(
+                    self::TEST_EMAIL_ADDR,
                     new Rule(Rules::STRING_TYPE)
                 )
             )
