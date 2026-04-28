@@ -193,54 +193,58 @@
             ({{ reviewRows.length }}) Records Found
           </oxd-text>
         </div>
-        <table class="orangehrm-employee-list-table payroll-review-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Full Name</th>
-              <th>National ID</th>
-              <th>Job Title</th>
-              <th>Base Salary</th>
-              <th>Standard Working Days</th>
-              <th>Actual Working Days</th>
-              <th>Actual Salary</th>
-              <th>Overtime</th>
-              <th>Allowance (Project Commission)</th>
-              <th>Total Salary</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="row in reviewRows" :key="row.id">
-              <td>{{ row.employeeId || row.empNumber }}</td>
-              <td>{{ row.fullName }}</td>
-              <td>{{ row.nationalId || '-' }}</td>
-              <td>{{ row.jobTitle || '-' }}</td>
-              <td>
-                {{ formatMoney(row.baseSalary) }}
-              </td>
-              <td>{{ row.standardWorkingDays }}</td>
-              <td>{{ row.actualWorkingDays }}</td>
-              <td>{{ formatMoney(row.actualSalary) }}</td>
-              <td>{{ row.overtime || '00:00' }}</td>
-              <td>
-                <input
-                  v-model.number="row.allowance"
-                  type="number"
-                  min="0"
-                  step="1"
-                  class="oxd-input oxd-input--active payroll-base-salary-input"
-                  :disabled="
-                    reviewLoading ||
-                    !reviewEditing ||
-                    reviewRunStatus !== 'draft'
-                  "
-                  @input="recalculateRow(row)"
-                />
-              </td>
-              <td>{{ formatMoney(row.totalSalary) }}</td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="payroll-review-scroll">
+          <table class="orangehrm-employee-list-table payroll-review-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Full Name</th>
+                <th>National ID</th>
+                <th>Job Title</th>
+                <th>Base Salary</th>
+                <th>Standard Working Days</th>
+                <th>Actual Working Days</th>
+                <th>Actual Salary</th>
+                <th>Overtime</th>
+                <th>Overtime Pay</th>
+                <th>Allowance (Project Commission)</th>
+                <th>Total Salary</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in reviewRows" :key="row.id">
+                <td>{{ row.employeeId || row.empNumber }}</td>
+                <td>{{ row.fullName }}</td>
+                <td>{{ row.nationalId || '-' }}</td>
+                <td>{{ row.jobTitle || '-' }}</td>
+                <td>
+                  {{ formatMoney(row.baseSalary) }}
+                </td>
+                <td>{{ row.standardWorkingDays }}</td>
+                <td>{{ row.actualWorkingDays }}</td>
+                <td>{{ formatMoney(row.actualSalary) }}</td>
+                <td>{{ row.overtime || '00:00' }}</td>
+                <td>{{ formatMoney(row.overtimePay) }}</td>
+                <td>
+                  <input
+                    v-model.number="row.allowance"
+                    type="number"
+                    min="0"
+                    step="1"
+                    class="oxd-input oxd-input--active payroll-base-salary-input"
+                    :disabled="
+                      reviewLoading ||
+                      !reviewEditing ||
+                      reviewRunStatus !== 'draft'
+                    "
+                    @input="recalculateRow(row)"
+                  />
+                </td>
+                <td>{{ formatMoney(row.totalSalary) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
       <div class="orangehrm-modal-footer">
         <oxd-button
@@ -273,115 +277,119 @@
         />
       </div>
     </div>
-  </div>
 
-  <teleport to="#app">
-    <oxd-dialog
-      v-if="showSendDialog"
-      :style="{maxWidth: '780px', width: '100%'}"
-      @update:show="closeSendDialog"
-    >
-      <div class="orangehrm-modal-header">
-        <oxd-text type="card-title">{{ $t('payroll.send_payslips') }}</oxd-text>
-      </div>
-
-      <oxd-divider />
-
-      <!-- Format selection -->
-      <div class="send-section">
-        <oxd-text tag="p" class="send-section-label">{{
-          $t('payroll.send_payslip_format')
-        }}</oxd-text>
-        <div class="payroll-format-row">
-          <label class="payroll-format-option">
-            <input v-model="sendFormat" type="radio" value="xlsx" />
-            Excel (XLSX)
-          </label>
-          <label class="payroll-format-option">
-            <input v-model="sendFormat" type="radio" value="pdf" />
-            PDF
-          </label>
+    <teleport to="#app">
+      <oxd-dialog
+        v-if="showSendDialog"
+        :style="{maxWidth: '780px', width: '100%'}"
+        @update:show="closeSendDialog"
+      >
+        <div class="orangehrm-modal-header">
+          <oxd-text type="card-title">{{
+            $t('payroll.send_payslips')
+          }}</oxd-text>
         </div>
-      </div>
 
-      <oxd-divider />
+        <oxd-divider />
 
-      <!-- Email preview -->
-      <div class="send-section">
-        <oxd-text tag="p" class="send-section-label">Xem trước email</oxd-text>
-        <div v-if="emailConfigLoading" class="send-loading">Đang tải...</div>
-        <div v-else class="email-preview-box">
-          <div class="email-preview-row">
-            <span class="email-preview-key">Tiêu đề:</span>
-            <span class="email-preview-val">{{
-              emailConfig.defaultSubject || '(chưa cấu hình)'
-            }}</span>
+        <!-- Format selection -->
+        <div class="send-section">
+          <oxd-text tag="p" class="send-section-label">{{
+            $t('payroll.send_payslip_format')
+          }}</oxd-text>
+          <div class="payroll-format-row">
+            <label class="payroll-format-option">
+              <input v-model="sendFormat" type="radio" value="xlsx" />
+              Excel (XLSX)
+            </label>
+            <label class="payroll-format-option">
+              <input v-model="sendFormat" type="radio" value="pdf" />
+              PDF
+            </label>
           </div>
-          <div class="email-preview-row email-preview-body-row">
-            <span class="email-preview-key">Nội dung:</span>
-            <pre class="email-preview-body">{{
-              emailConfig.defaultBody || '(chưa cấu hình)'
-            }}</pre>
-          </div>
-          <p class="email-preview-hint">
-            Biến: <code>&#123;&#123;companyName&#125;&#125;</code>
-            <code>&#123;&#123;employeeName&#125;&#125;</code>
-            <code>&#123;&#123;yearMonth&#125;&#125;</code>
-            <code>&#123;&#123;netSalary&#125;&#125;</code>
-          </p>
         </div>
-      </div>
 
-      <oxd-divider />
+        <oxd-divider />
 
-      <!-- Test email -->
-      <div class="send-section">
-        <oxd-text tag="p" class="send-section-label"
-          >Gửi email thử nghiệm</oxd-text
-        >
-        <div class="test-email-row">
-          <input
-            v-model="testEmailAddr"
-            type="email"
-            placeholder="Nhập địa chỉ email thử nghiệm..."
-            class="oxd-input oxd-input--active test-email-input"
+        <!-- Email preview -->
+        <div class="send-section">
+          <oxd-text tag="p" class="send-section-label"
+            >Xem trước email</oxd-text
+          >
+          <div v-if="emailConfigLoading" class="send-loading">Đang tải...</div>
+          <div v-else class="email-preview-box">
+            <div class="email-preview-row">
+              <span class="email-preview-key">Tiêu đề:</span>
+              <span class="email-preview-val">{{
+                emailConfig.defaultSubject || '(chưa cấu hình)'
+              }}</span>
+            </div>
+            <div class="email-preview-row email-preview-body-row">
+              <span class="email-preview-key">Nội dung:</span>
+              <pre class="email-preview-body">{{
+                emailConfig.defaultBody || '(chưa cấu hình)'
+              }}</pre>
+            </div>
+            <p class="email-preview-hint">
+              Biến: <code>&#123;&#123;companyName&#125;&#125;</code>
+              <code>&#123;&#123;employeeName&#125;&#125;</code>
+              <code>&#123;&#123;yearMonth&#125;&#125;</code>
+              <code>&#123;&#123;netSalary&#125;&#125;</code>
+            </p>
+          </div>
+        </div>
+
+        <oxd-divider />
+
+        <!-- Test email -->
+        <div class="send-section">
+          <oxd-text tag="p" class="send-section-label"
+            >Gửi email thử nghiệm</oxd-text
+          >
+          <div class="test-email-row">
+            <input
+              v-model="testEmailAddr"
+              type="email"
+              placeholder="Nhập địa chỉ email thử nghiệm..."
+              class="oxd-input oxd-input--active test-email-input"
+            />
+            <oxd-button
+              display-type="secondary"
+              :label="testEmailSending ? 'Đang gửi...' : 'Gửi thử'"
+              :disabled="testEmailSending || !testEmailAddr"
+              @click="sendTestEmail"
+            />
+          </div>
+          <div
+            v-if="testEmailResult"
+            :class="[
+              'test-email-result',
+              testEmailResult.ok ? 'test-email-ok' : 'test-email-err',
+            ]"
+          >
+            {{ testEmailResult.msg }}
+          </div>
+        </div>
+
+        <oxd-divider />
+
+        <div class="orangehrm-modal-footer">
+          <oxd-button
+            display-type="ghost"
+            class="orangehrm-button-margin"
+            :label="$t('general.cancel')"
+            @click="closeSendDialog"
           />
           <oxd-button
             display-type="secondary"
-            :label="testEmailSending ? 'Đang gửi...' : 'Gửi thử'"
-            :disabled="testEmailSending || !testEmailAddr"
-            @click="sendTestEmail"
+            class="orangehrm-button-margin"
+            :label="$t('payroll.confirm_send')"
+            @click="confirmSend"
           />
         </div>
-        <div
-          v-if="testEmailResult"
-          :class="[
-            'test-email-result',
-            testEmailResult.ok ? 'test-email-ok' : 'test-email-err',
-          ]"
-        >
-          {{ testEmailResult.msg }}
-        </div>
-      </div>
-
-      <oxd-divider />
-
-      <div class="orangehrm-modal-footer">
-        <oxd-button
-          display-type="ghost"
-          class="orangehrm-button-margin"
-          :label="$t('general.cancel')"
-          @click="closeSendDialog"
-        />
-        <oxd-button
-          display-type="secondary"
-          class="orangehrm-button-margin"
-          :label="$t('payroll.confirm_send')"
-          @click="confirmSend"
-        />
-      </div>
-    </oxd-dialog>
-  </teleport>
+      </oxd-dialog>
+    </teleport>
+  </div>
 </template>
 
 <script>
@@ -656,22 +664,25 @@ export default {
       try {
         const rows = await this.loadEmployeesAsReviewRows(runId);
         const snapshot = await this.loadReviewSnapshot(runId);
-        this.reviewRows = rows.map((row) => ({
-          ...row,
-          baseSalary: Number(row.baseSalary ?? 0),
-          standardWorkingDays: Number(row.standardWorkingDays ?? 22),
-          actualWorkingDays: Number(row.actualWorkingDays ?? 0),
-          actualSalary: Number(row.actualSalary ?? 0),
-          overtime: row.overtime ?? '00:00',
-          allowance: Number(
-            snapshot?.[Number(row.empNumber)]?.allowance ?? row.allowance ?? 0,
-          ),
-          totalSalary: Number(
-            snapshot?.[Number(row.empNumber)]?.netSalary ??
-              row.totalSalary ??
-              0,
-          ),
-        }));
+        this.reviewRows = rows.map((row) => {
+          const merged = {
+            ...row,
+            baseSalary: Number(row.baseSalary ?? 0),
+            standardWorkingDays: Number(row.standardWorkingDays ?? 22),
+            actualWorkingDays: Number(row.actualWorkingDays ?? 0),
+            actualSalary: Number(row.actualSalary ?? 0),
+            overtime: row.overtime ?? '00:00',
+            overtimePay: Number(row.overtimePay ?? 0),
+            allowance: Number(
+              snapshot?.[Number(row.empNumber)]?.allowance ??
+                row.allowance ??
+                0,
+            ),
+            totalSalary: 0,
+          };
+          this.recalculateRow(merged);
+          return merged;
+        });
       } catch (e) {
         this.reviewRows = await this.loadEmployeesAsReviewRows(runId);
       } finally {
@@ -887,6 +898,7 @@ export default {
                   actualWorkingDays: summary.actualWorkingDays,
                   actualSalary: 0,
                   overtime: summary.overtime,
+                  overtimePay: 0,
                   allowance: 0,
                   totalSalary: 0,
                 };
@@ -945,8 +957,18 @@ export default {
         standardWorkingDays > 0
           ? (baseSalary / standardWorkingDays) * actualWorkingDays
           : 0;
+      const parseOvertimeHours = (label) => {
+        const [h, m] = String(label || '00:00')
+          .split(':')
+          .map(Number);
+        return (h || 0) + (m || 0) / 60;
+      };
+      const hourlyRate =
+        standardWorkingDays > 0 ? baseSalary / (standardWorkingDays * 8) : 0;
+      const overtimePay = parseOvertimeHours(row.overtime) * hourlyRate;
       row.actualSalary = Math.round(actualSalary);
-      row.totalSalary = Math.round(actualSalary + allowance);
+      row.overtimePay = Math.round(overtimePay);
+      row.totalSalary = Math.round(actualSalary + overtimePay + allowance);
     },
 
     formatMoney(value) {
@@ -1084,8 +1106,14 @@ export default {
   min-width: 110px;
 }
 
+.payroll-review-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .payroll-review-table {
-  min-width: 1320px;
+  min-width: 1500px;
 }
 
 .orangehrm-employee-list-table {

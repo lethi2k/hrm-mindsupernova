@@ -514,10 +514,16 @@ class PayrollService
             $run->getYearMonth()
         );
         $actualWorkingDays = (float) ($summary['regularSeconds'] ?? 0) / (8 * 3600);
+        $overtimeSeconds = (float) ($summary['overtimeSeconds'] ?? 0);
+        $hourlyRate = ($standardWorkingDays > 0 && $baseSalary > 0)
+            ? $baseSalary / ($standardWorkingDays * 8)
+            : 0.0;
+        $overtimePay = ($overtimeSeconds / 3600.0) * $hourlyRate;
         return [
             'baseSalary'          => $baseSalary,
             'standardWorkingDays' => $standardWorkingDays,
             'actualWorkingDays'   => $actualWorkingDays,
+            'overtimePay'         => $overtimePay,
             'nationalId'          => $emp->getDrivingLicenseNo() ?? '',
             'jobTitle'            => $emp->getJobTitle()?->getJobTitleName() ?? '',
         ];

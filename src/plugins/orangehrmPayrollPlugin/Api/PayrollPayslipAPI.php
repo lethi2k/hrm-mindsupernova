@@ -123,6 +123,10 @@ class PayrollPayslipAPI extends Endpoint implements CollectionEndpoint
         $overtimeSeconds = (float) ($summary['overtimeSeconds'] ?? 0);
         $actualWorkingDays = $regularSeconds / (8 * 3600);
         $actualSalary = $standardWorkingDays > 0 ? ($baseSalary / $standardWorkingDays) * $actualWorkingDays : 0.0;
+        $hourlyRate = ($standardWorkingDays > 0 && $baseSalary > 0)
+            ? $baseSalary / ($standardWorkingDays * 8)
+            : 0.0;
+        $overtimePay = ($overtimeSeconds / 3600.0) * $hourlyRate;
         $allowance = (float) ($storedAllowance ?? '0');
         return [
             'id' => $rowId,
@@ -140,8 +144,9 @@ class PayrollPayslipAPI extends Endpoint implements CollectionEndpoint
             'actualWorkingDays' => number_format($actualWorkingDays, 2, '.', ''),
             'actualSalary' => number_format($actualSalary, 2, '.', ''),
             'overtime' => $this->formatSecondsToHoursLabel($overtimeSeconds),
+            'overtimePay' => number_format($overtimePay, 2, '.', ''),
             'allowance' => number_format($allowance, 2, '.', ''),
-            'totalSalary' => number_format($actualSalary + $allowance, 2, '.', ''),
+            'totalSalary' => number_format($actualSalary + $overtimePay + $allowance, 2, '.', ''),
             'netSalary' => $netSalary,
             'filePath' => $filePath,
             'fileFormat' => $fileFormat,

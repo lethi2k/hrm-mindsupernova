@@ -24,6 +24,7 @@ class PayrollPayslipReviewModel implements Normalizable
             'actualWorkingDays',
             'actualSalary',
             'overtime',
+            'overtimePay',
             'allowance',
             'totalSalary',
             'netSalary',

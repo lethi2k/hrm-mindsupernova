@@ -257,14 +257,21 @@ class MenuService
      */
     private function reorderSidePanelMenuItems(array $menuItems): array
     {
+        // Keys can be "module" or "module::screen" for same-module disambiguation
         $preferredOrder = [
-            'dashboard' => 1,
-            'time' => 2,
-            'leave' => 3,
-            'pim' => 4,
-            'performance' => 5,
-            'claim' => 6,
-            'buzz' => 7,
+            'dashboard'              => 1,
+            'admin'                  => 2,
+            'pim::viewPimModule'     => 3,
+            'payroll'                => 4,
+            'leave'                  => 5,
+            'time'                   => 6,
+            'recruitment'            => 7,
+            'pim::viewMyDetails'     => 8,
+            'performance'            => 9,
+            'directory'              => 10,
+            'maintenance'            => 11,
+            'claim'                  => 12,
+            'buzz'                   => 13,
         ];
 
         $indexedMenuItems = [];
@@ -276,11 +283,16 @@ class MenuService
         }
 
         usort($indexedMenuItems, function (array $left, array $right) use ($preferredOrder): int {
-            $leftModule = $left['item']->getModule();
-            $rightModule = $right['item']->getModule();
+            $getOrder = static function (array $entry) use ($preferredOrder): int {
+                $module = $entry['item']->getModule() ?? '';
+                $screen = $entry['item']->getScreen() ?? '';
+                return $preferredOrder[$module . '::' . $screen]
+                    ?? $preferredOrder[$module]
+                    ?? PHP_INT_MAX;
+            };
 
-            $leftOrder = $preferredOrder[$leftModule] ?? PHP_INT_MAX;
-            $rightOrder = $preferredOrder[$rightModule] ?? PHP_INT_MAX;
+            $leftOrder = $getOrder($left);
+            $rightOrder = $getOrder($right);
 
             if ($leftOrder === $rightOrder) {
                 return $left['index'] <=> $right['index'];

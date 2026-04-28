@@ -517,13 +517,15 @@ export default {
         );
       };
 
-      const validateTotal = () => {
-        return this.dailyTotals[date] > 86400
-          ? this.$t('time.total_should_be_less_than_24_hours')
-          : true;
+      const validateSingleEntry = (v) => {
+        if (v === '' || v === null) return true;
+        const seconds = parseTimeInSeconds(v);
+        return seconds <= 86400
+          ? true
+          : this.$t('time.total_should_be_less_than_24_hours');
       };
 
-      return [validateFormat, validateTotal];
+      return [validateFormat, validateSingleEntry];
     },
     isWeekendColumn(date) {
       return !this.columns?.[date]?.workday;
