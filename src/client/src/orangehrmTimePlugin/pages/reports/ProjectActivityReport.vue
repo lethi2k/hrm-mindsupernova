@@ -94,13 +94,9 @@
 
 <script>
 import {computed, ref} from 'vue';
-import {
-  required,
-  validSelection,
-} from '@/core/util/validation/rules';
+import {required, validSelection} from '@/core/util/validation/rules';
 import ReportsTable from '@/core/components/table/ReportsTable';
 import ProjectAutocomplete from '@/orangehrmTimePlugin/components/ProjectAutocomplete.vue';
-import usei18n from '@/core/util/composable/usei18n';
 import useLocale from '@/core/util/composable/useLocale';
 import {OxdSwitchInput} from '@ohrm/oxd';
 
@@ -170,12 +166,13 @@ export default {
       ...(props.project && {project: props.project}),
     });
 
-    const {$t} = usei18n();
-
     const rules = {
       project: [required, validSelection],
       selectedMonth: [required, validSelection],
-      selectedYear: [required, (value) => /^\d{4}$/.test(value) || 'Invalid year'],
+      selectedYear: [
+        required,
+        (value) => /^\d{4}$/.test(value) || 'Invalid year',
+      ],
     };
 
     const serializedFilters = computed(() => {

@@ -154,9 +154,7 @@ export default {
         return 0;
       }
       const [hours = '0', minutes = '0', seconds = '0'] = duration.split(':');
-      return (
-        Number(hours) * 3600 + Number(minutes) * 60 + Number(seconds || 0)
-      );
+      return Number(hours) * 3600 + Number(minutes) * 60 + Number(seconds || 0);
     };
     const calculateOvertime = (rows) => {
       if (!Array.isArray(rows)) {
@@ -176,7 +174,10 @@ export default {
             overtimeSeconds += workedSeconds;
             return;
           }
-          overtimeSeconds += Math.max(0, workedSeconds - STANDARD_WORKDAY_SECONDS);
+          overtimeSeconds += Math.max(
+            0,
+            workedSeconds - STANDARD_WORKDAY_SECONDS,
+          );
         });
       });
       return formatSecondsToHoursLabel(overtimeSeconds);
