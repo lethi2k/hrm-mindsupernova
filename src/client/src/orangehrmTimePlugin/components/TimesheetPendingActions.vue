@@ -37,8 +37,9 @@
     ></table-header>
     <div class="orangehrm-container">
       <oxd-card-table
+        v-model:order="sortDefinition"
         :headers="headers"
-        :items="displayItems"
+        :items="sortedDisplayItems"
         :selectable="false"
         :clickable="false"
         :loading="isLoading"
@@ -148,26 +149,37 @@ export default {
     const formatSecondsToDecimalHours = (seconds) => {
       return (seconds / 3600).toFixed(2);
     };
-    const calculateOvertime = (columns) => {
-      if (!columns) {
+    const getEntryDurationInSeconds = (duration) => {
+      if (!duration || typeof duration !== 'string') {
+        return 0;
+      }
+      const [hours = '0', minutes = '0', seconds = '0'] = duration.split(':');
+      return (
+        Number(hours) * 3600 + Number(minutes) * 60 + Number(seconds || 0)
+      );
+    };
+    const calculateOvertime = (rows) => {
+      if (!Array.isArray(rows)) {
         return '-';
       }
-      let weightedOvertimeSeconds = 0;
-      Object.entries(columns).forEach(([date, column]) => {
-        const dateObj = parseDate(date, 'yyyy-MM-dd');
-        if (!dateObj) {
-          return;
-        }
-        const dayOfWeek = dateObj.getDay();
-        const workedSeconds = getDurationInSeconds(column?.total);
-        if (dayOfWeek === 0 || dayOfWeek === 6) {
-          weightedOvertimeSeconds += workedSeconds * 2;
-          return;
-        }
-        weightedOvertimeSeconds +=
-          Math.max(0, workedSeconds - STANDARD_WORKDAY_SECONDS) * 1.5;
+      let overtimeSeconds = 0;
+      rows.forEach((row) => {
+        Object.entries(row?.dates ?? {}).forEach(([date, entry]) => {
+          const dateObj = parseDate(date, 'yyyy-MM-dd');
+          if (!dateObj) {
+            return;
+          }
+          const dayOfWeek = dateObj.getDay();
+          const workedSeconds = getEntryDurationInSeconds(entry?.duration);
+          if (dayOfWeek === 0 || dayOfWeek === 6) {
+            // Weekend logged time is treated as overtime.
+            overtimeSeconds += workedSeconds;
+            return;
+          }
+          overtimeSeconds += Math.max(0, workedSeconds - STANDARD_WORKDAY_SECONDS);
+        });
       });
-      return formatSecondsToHoursLabel(weightedOvertimeSeconds);
+      return formatSecondsToHoursLabel(overtimeSeconds);
     };
     const calculateRegularDuration = (columns) => {
       if (!columns) {
@@ -227,6 +239,7 @@ export default {
           period: `${startDate} - ${endDate}`,
           employee: empName,
           status: getStatusLabel(item.status?.name),
+          projectCount: '-',
           totalDuration: '-',
           overtime: '-',
           leaveHours: '-',
@@ -241,6 +254,9 @@ export default {
         props.filterHasLoggedTime === null
           ? undefined
           : String(props.filterHasLoggedTime),
+    });
+    const sortDefinition = ref({
+      projectCount: 'DEFAULT',
     });
 
     const {
@@ -292,10 +308,15 @@ export default {
                 url: `/api/v2/time/employees/timesheets/${item.id}/entries`,
               });
               const columns = apiResponse.data?.meta?.columns;
+              const rows = apiResponse.data?.data;
               const sum = apiResponse.data?.meta?.sum;
               const totalLoggedSeconds = getDurationInSeconds(sum);
+              const uniqueProjectIds = new Set(
+                (rows ?? []).map((row) => row?.project?.id).filter(Boolean),
+              );
+              item.projectCount = uniqueProjectIds.size;
               item.totalDuration = calculateRegularDuration(columns);
-              item.overtime = calculateOvertime(columns);
+              item.overtime = calculateOvertime(rows);
               item.leaveHours = calculateLeaveHours(columns);
               if (totalLoggedSeconds <= 0) {
                 item.totalDuration = '0.00';
@@ -314,6 +335,17 @@ export default {
     );
 
     const displayItems = computed(() => response.value?.data ?? []);
+    const sortedDisplayItems = computed(() => {
+      const order = sortDefinition.value.projectCount;
+      if (order !== 'ASC' && order !== 'DESC') {
+        return displayItems.value;
+      }
+      return [...displayItems.value].sort((a, b) => {
+        const first = Number(a?.projectCount ?? 0);
+        const second = Number(b?.projectCount ?? 0);
+        return order === 'ASC' ? first - second : second - first;
+      });
+    });
 
     const displayTotal = computed(() => total.value ?? 0);
 
@@ -328,9 +360,11 @@ export default {
       execQuery,
       items: response,
       displayItems,
+      sortedDisplayItems,
       displayTotal,
       currentMonthWorkdays,
       currentMonthWorkHours,
+      sortDefinition,
     };
   },
   data() {
@@ -345,33 +379,42 @@ export default {
         {
           name: 'period',
           title: this.$t('time.timesheet_period'),
-          style: {flex: '20%'},
+          style: {flex: '16%'},
+        },
+        {
+          name: 'projectCount',
+          title: 'Project Count',
+          sortField: 'projectCount',
+          style: {flex: '10%'},
         },
         {
           name: 'status',
-          title: this.$t('general.status'),
-          style: {flex: '12%'},
+          title:
+            this.$t('general.status') === 'general.status'
+              ? 'Status'
+              : this.$t('general.status'),
+          style: {flex: '10%'},
         },
         {
           name: 'totalDuration',
           title: 'Working Hours',
-          style: {flex: '14%'},
+          style: {flex: '12%'},
         },
         {
           name: 'overtime',
           title: 'Overtime',
-          style: {flex: '10%'},
+          style: {flex: '8%'},
         },
         {
           name: 'leaveHours',
           title: 'Leave Hours',
-          style: {flex: '10%'},
+          style: {flex: '8%'},
         },
         {
           name: 'actions',
           slot: 'footer',
           title: this.$t('general.actions'),
-          style: {flex: '16%'},
+          style: {flex: '10%'},
           cellType: 'oxd-table-cell-actions',
           cellConfig: {
             view: {

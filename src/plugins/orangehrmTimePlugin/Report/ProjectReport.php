@@ -46,10 +46,12 @@ class ProjectReport implements EndpointAwareReport
     use TextHelperTrait;
     use I18NHelperTrait;
 
+    public const PARAMETER_EMPLOYEE_NAME = 'employeeName';
     public const PARAMETER_ACTIVITY_NAME = 'activityName';
-    public const PARAMETER_ACTIVITY_ID = 'activityId';
-    public const PARAMETER_TIME = 'time';
-    public const PARAMETER_ACTIVITY_DELETED = 'deleted';
+    public const PARAMETER_TIMESHEET_PERIOD = 'timesheetPeriod';
+    public const PARAMETER_WORKING_HOURS = 'workingHours';
+    public const PARAMETER_OVERTIME = 'overtime';
+    public const PARAMETER_LEAVE_HOURS = 'leaveHours';
 
     public const FILTER_PARAMETER_PROJECT_ID = 'projectId';
     public const FILTER_PARAMETER_DATE_FROM = 'fromDate';
@@ -160,13 +162,24 @@ class ProjectReport implements EndpointAwareReport
     {
         return new Header(
             [
+                (new Column(self::PARAMETER_EMPLOYEE_NAME))
+                    ->setName($this->getI18NHelper()->transBySource('Employee Name'))
+                    ->setSize(self::DEFAULT_COLUMN_SIZE),
                 (new Column(self::PARAMETER_ACTIVITY_NAME))
                     ->setName($this->getI18NHelper()->transBySource('Activity Name'))
-                    ->setCellProperties(['class' => ['cell-action' => true]])
                     ->setSize(self::DEFAULT_COLUMN_SIZE),
-                (new Column(self::PARAMETER_TIME))
-                    ->setName($this->getI18NHelper()->transBySource('Time (Hours)'))
+                (new Column(self::PARAMETER_TIMESHEET_PERIOD))
+                    ->setName($this->getI18NHelper()->transBySource('Timesheet Period'))
+                    ->setSize(self::DEFAULT_COLUMN_SIZE),
+                (new Column(self::PARAMETER_WORKING_HOURS))
+                    ->setName($this->getI18NHelper()->transBySource('Working Hours'))
                     ->setCellProperties(['class' => ['col-alt' => true]])
+                    ->setSize(self::DEFAULT_COLUMN_SIZE),
+                (new Column(self::PARAMETER_OVERTIME))
+                    ->setName($this->getI18NHelper()->transBySource('Overtime'))
+                    ->setSize(self::DEFAULT_COLUMN_SIZE),
+                (new Column(self::PARAMETER_LEAVE_HOURS))
+                    ->setName($this->getI18NHelper()->transBySource('Leave Hours'))
                     ->setSize(self::DEFAULT_COLUMN_SIZE),
             ]
         );

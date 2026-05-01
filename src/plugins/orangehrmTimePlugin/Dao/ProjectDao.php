@@ -19,8 +19,11 @@
 
 namespace OrangeHRM\Time\Dao;
 
+use DateTimeInterface;
+use Doctrine\DBAL\Connection;
 use Doctrine\ORM\QueryBuilder;
 use OrangeHRM\Core\Dao\BaseDao;
+use OrangeHRM\Entity\Leave;
 use OrangeHRM\Entity\Project;
 use OrangeHRM\Entity\ProjectActivity;
 use OrangeHRM\Entity\ProjectAdmin;
@@ -272,12 +275,18 @@ class ProjectDao extends BaseDao
     ): Paginator {
         $q = $this->getProjectReportQueryBuilderWrapper($projectReportSearchFilterParams)->getQueryBuilder();
         $q->select(
-            'projectActivity.id AS activityId,
-            projectActivity.name, 
-            projectActivity.deleted AS deleted, 
+            'employee.empNumber AS empNumber,
+            CONCAT(employee.firstName, \' \', employee.lastName) AS fullName,
+            projectActivity.name AS activityName,
+            timesheetItem.date AS itemDate,
             SUM(COALESCE(timesheetItem.duration, 0)) AS totalDuration'
         );
-        $q->groupBy('projectActivity.id');
+        $q->groupBy('employee.empNumber');
+        $q->addGroupBy('employee.firstName');
+        $q->addGroupBy('employee.lastName');
+        $q->addGroupBy('projectActivity.id');
+        $q->addGroupBy('projectActivity.name');
+        $q->addGroupBy('timesheetItem.date');
 
         return $this->getPaginator($q);
     }
@@ -295,6 +304,65 @@ class ProjectDao extends BaseDao
     }
 
     /**
+     * @param int[] $empNumbers
+     * @return array<int, float>
+     */
+    public function getLeaveHoursByEmployeeNumbersForDateRange(
+        array $empNumbers,
+        ?DateTimeInterface $fromDate,
+        ?DateTimeInterface $toDate
+    ): array {
+        if ($empNumbers === []) {
+            return [];
+        }
+
+        $from = !is_null($fromDate) ? $fromDate->format('Y-m-d') : null;
+        $to = !is_null($toDate) ? $toDate->format('Y-m-d') : null;
+
+        $where = ['emp_number IN (:empNumbers)', 'status IN (:statuses)'];
+        $params = [
+            'empNumbers' => $empNumbers,
+            'statuses' => [
+                Leave::LEAVE_STATUS_LEAVE_APPROVED,
+                Leave::LEAVE_STATUS_LEAVE_TAKEN,
+            ],
+        ];
+        $types = [
+            'empNumbers' => Connection::PARAM_INT_ARRAY,
+            'statuses' => Connection::PARAM_INT_ARRAY,
+        ];
+
+        if (!is_null($from)) {
+            $where[] = '`date` >= :fromDate';
+            $params['fromDate'] = $from;
+            $types['fromDate'] = \Doctrine\DBAL\ParameterType::STRING;
+        }
+        if (!is_null($to)) {
+            $where[] = '`date` <= :toDate';
+            $params['toDate'] = $to;
+            $types['toDate'] = \Doctrine\DBAL\ParameterType::STRING;
+        }
+
+        $sql = 'SELECT emp_number AS empNumber, SUM(COALESCE(length_hours, 0)) AS leaveHours
+            FROM ohrm_leave
+            WHERE ' . implode(' AND ', $where) . '
+            GROUP BY emp_number';
+
+        $rows = $this->getEntityManager()->getConnection()->fetchAllAssociative(
+            $sql,
+            $params,
+            $types
+        );
+
+        $result = [];
+        foreach ($rows as $row) {
+            $result[(int)$row['empNumber']] = (float)($row['leaveHours'] ?? 0);
+        }
+
+        return $result;
+    }
+
+    /**
      * @param ProjectReportSearchFilterParams $projectReportSearchFilterParams
      * @return QueryBuilderWrapper
      */
@@ -305,6 +373,7 @@ class ProjectDao extends BaseDao
 
         $q->leftJoin('projectActivity.project', 'project');
         $q->leftJoin('projectActivity.timesheetItems', 'timesheetItem');
+        $q->leftJoin('timesheetItem.employee', 'employee');
         $q->leftJoin('timesheetItem.timesheet', 'timesheet');
 
         $this->setSortingAndPaginationParams($q, $projectReportSearchFilterParams);
@@ -339,6 +408,8 @@ class ProjectDao extends BaseDao
             $q->andWhere('timesheet.state = :state');
             $q->setParameter('state', ProjectReportSearchFilterParams::TIMESHEET_STATE_APPROVED);
         }
+
+        $q->andWhere($q->expr()->isNotNull('timesheetItem.id'));
 
         return $this->getQueryBuilderWrapper($q);
     }

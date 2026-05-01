@@ -41,7 +41,7 @@
       </template>
       <template #footer-title>
         <oxd-text v-show="timesheetStatus" type="subtitle-2">
-          {{ $t('general.status') }}: {{ employeeTimesheetStatus }}
+          {{ statusLabel }}: {{ employeeTimesheetStatus }}
         </oxd-text>
         <oxd-text
           v-show="timesheet?.startDate && timesheet?.endDate"
@@ -197,6 +197,10 @@ export default {
     };
   },
   computed: {
+    statusLabel() {
+      const translated = this.$t('general.status');
+      return translated === 'general.status' ? 'Status' : translated;
+    },
     title() {
       const empName = this.translateEmpName(this.employee, {
         includeMiddle: false,

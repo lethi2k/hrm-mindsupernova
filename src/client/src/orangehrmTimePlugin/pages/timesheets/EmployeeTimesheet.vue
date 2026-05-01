@@ -37,18 +37,19 @@
               />
             </oxd-grid-item>
             <oxd-grid-item>
-              <oxd-label :label="monthLabel" />
               <div class="month-year-picker">
                 <oxd-input-field
                   v-model="selectedMonth"
                   type="select"
                   :options="months"
                   :rules="rules.selectedMonth"
+                  :label="monthLabel"
                 />
                 <oxd-input-field
                   v-model="selectedYear"
                   type="input"
                   :rules="rules.selectedYear"
+                  :label="yearLabel"
                   placeholder="Year"
                 />
               </div>
@@ -123,6 +124,10 @@ export default {
     monthLabel() {
       const translated = this.$t('general.month');
       return translated === 'general.month' ? 'Month' : translated;
+    },
+    yearLabel() {
+      const translated = this.$t('general.year');
+      return translated === 'general.year' ? 'Year' : translated;
     },
     logTimeStatusLabel() {
       return 'Log Time Status';
