@@ -22,11 +22,6 @@
           {{ $t('general.about') }}
         </a>
       </li>
-      <li>
-        <a :href="supportUrl" role="menuitem" class="oxd-userdropdown-link">
-          {{ $t('general.support') }}
-        </a>
-      </li>
       <li v-if="updatePasswordUrl">
         <a
           :href="updatePasswordUrl"
@@ -41,13 +36,6 @@
           {{ $t('general.logout') }}
         </a>
       </li>
-    </template>
-    <template #nav-actions>
-      <oxd-icon-button
-        name="question-lg"
-        :title="$t('general.help')"
-        @click="onClickSupport"
-      />
     </template>
   </oxd-layout>
   <about v-if="showAboutModel" @close="closeAboutModel"></about>
@@ -76,20 +64,12 @@ export default {
       type: String,
       default: '#',
     },
-    supportUrl: {
-      type: String,
-      default: '#',
-    },
     updatePasswordUrl: {
       type: String,
       default: '#',
     },
     dateFormat: {
       type: Object,
-      default: null,
-    },
-    helpUrl: {
-      type: String,
       default: null,
     },
     showUpgrade: {
@@ -110,12 +90,7 @@ export default {
       showAboutModel.value = false;
     };
 
-    const onClickSupport = () => {
-      if (props.helpUrl) window.open(props.helpUrl, '_blank');
-    };
-
     return {
-      onClickSupport,
       showAboutModel,
       openAboutModel,
       closeAboutModel,

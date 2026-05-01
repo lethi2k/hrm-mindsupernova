@@ -507,7 +507,7 @@ export default {
     onDurationBlur() {
       this.focusedField = null;
     },
-    validateDuration(date) {
+    validateDuration(_date) {
       const validateFormat = (v) => {
         return (
           v === '' ||

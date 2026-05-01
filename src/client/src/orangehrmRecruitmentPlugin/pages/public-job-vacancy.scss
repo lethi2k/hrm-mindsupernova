@@ -170,7 +170,7 @@
 
 .oxd-brand-banner {
   flex: 1;
-  height: 32px;
+  height: auto;
   margin-bottom: 8px;
   @include oxd-respond-to('md') {
     flex: 0;

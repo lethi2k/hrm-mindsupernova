@@ -14,7 +14,7 @@ GetOne:
     query: [ ]
     data:
       companyName: 'Orange HRM'
-      productName: 'OrangeHRM OS'
+      productName: 'Mind Supernova'
       version: '5.8.1'
       numberOfActiveEmployee: 3
       numberOfPastEmployee: 0

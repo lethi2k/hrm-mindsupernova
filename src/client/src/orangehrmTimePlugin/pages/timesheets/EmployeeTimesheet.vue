@@ -37,13 +37,21 @@
               />
             </oxd-grid-item>
             <oxd-grid-item>
-              <oxd-input-field
-                v-model="selectedMonth"
-                type="select"
-                :options="months"
-                :rules="rules.selectedMonth"
-                :label="monthLabel"
-              />
+              <oxd-label :label="monthLabel" />
+              <div class="month-year-picker">
+                <oxd-input-field
+                  v-model="selectedMonth"
+                  type="select"
+                  :options="months"
+                  :rules="rules.selectedMonth"
+                />
+                <oxd-input-field
+                  v-model="selectedYear"
+                  type="input"
+                  :rules="rules.selectedYear"
+                  placeholder="Year"
+                />
+              </div>
             </oxd-grid-item>
             <oxd-grid-item>
               <oxd-input-field
@@ -92,15 +100,14 @@ export default {
 
   setup() {
     const {locale} = useLocale();
-    return {
-      locale,
-    };
+    return {locale};
   },
 
   data() {
     return {
       employee: null,
       selectedMonth: null,
+      selectedYear: String(new Date().getFullYear()),
       logTimeStatus: null,
       appliedDate: null,
       appliedEmpNumber: null,
@@ -108,6 +115,7 @@ export default {
       rules: {
         employee: [shouldNotExceedCharLength(100), validSelection],
         selectedMonth: [required],
+        selectedYear: [required, (v) => /^\d{4}$/.test(v) || 'Invalid year'],
       },
     };
   },
@@ -126,46 +134,37 @@ export default {
       ];
     },
     months() {
-      return Array(12)
-        .fill('')
-        .map((...[, index]) => {
-          return {
-            id: index + 1,
-            label: this.locale.localize.month(index, {
-              width: 'wide',
-            }),
-          };
-        });
+      return Array.from({length: 12}, (_, i) => ({
+        id: i + 1,
+        label: this.locale.localize.month(i, {width: 'wide'}),
+      }));
     },
     selectedDate() {
       const month = this.selectedMonth?.id;
-      if (!month) {
-        return null;
-      }
-      const year = new Date().getFullYear();
+      const year = parseInt(this.selectedYear);
+      if (!month || !year || !/^\d{4}$/.test(this.selectedYear)) return null;
       return `${year}-${String(month).padStart(2, '0')}-01`;
     },
   },
   mounted() {
     const now = new Date();
     this.selectedMonth = this.months[now.getMonth()];
+    this.selectedYear = String(now.getFullYear());
     this.logTimeStatus = this.logTimeStatusOptions[0];
     const query = new URLSearchParams(window.location.search);
-    const selectedDate = query.get('date');
-    if (selectedDate) {
-      const selectedMonth = new Date(selectedDate).getMonth();
-      this.selectedMonth = this.months[selectedMonth];
-      this.appliedDate = selectedDate;
-    } else {
-      this.appliedDate = this.selectedDate;
+    const queryDate = query.get('date');
+    if (queryDate) {
+      const d = new Date(queryDate);
+      if (!isNaN(d.getTime())) {
+        this.selectedMonth = this.months[d.getMonth()];
+        this.selectedYear = String(d.getFullYear());
+      }
     }
+    this.appliedDate = this.selectedDate;
     const empNumber = query.get('empNumber');
     this.appliedEmpNumber = empNumber ? Number(empNumber) : null;
     const hasLoggedTime = query.get('hasLoggedTime');
-    if (hasLoggedTime === 'true') {
-      this.logTimeStatus = this.logTimeStatusOptions[0];
-      this.appliedHasLoggedTime = true;
-    } else if (hasLoggedTime === 'false') {
+    if (hasLoggedTime === 'false') {
       this.logTimeStatus = this.logTimeStatusOptions[1];
       this.appliedHasLoggedTime = false;
     } else {
@@ -193,3 +192,14 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.month-year-picker {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.month-year-picker > * {
+  flex: 1;
+}
+</style>

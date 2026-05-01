@@ -741,56 +741,6 @@ export default {
           return 0;
         }
       };
-      const getActualWorkingDays = async (empNumber, yearMonth) => {
-        if (!empNumber || !yearMonth) {
-          return 0;
-        }
-        try {
-          const [year, month] = yearMonth
-            .split('-')
-            .map((value) => Number(value));
-          const lastDay = new Date(year, month, 0).getDate();
-          const fromDate = `${yearMonth}-01`;
-          const toDate = `${yearMonth}-${String(lastDay).padStart(2, '0')}`;
-          const timesheetHttp = new APIService(
-            window.appGlobal.baseUrl,
-            `/api/v2/time/employees/${empNumber}/timesheets`,
-          );
-          const timesheetRes = await timesheetHttp.getAll({
-            fromDate,
-            toDate,
-            limit: 1,
-          });
-          const timesheet = (timesheetRes?.data?.data ?? [])[0];
-          if (!timesheet?.id) {
-            return 0;
-          }
-          const entriesHttp = new APIService(
-            window.appGlobal.baseUrl,
-            `/api/v2/time/employees/timesheets/${timesheet.id}/entries`,
-          );
-          const entriesRes = await entriesHttp.getAll();
-          const rows = entriesRes?.data?.data ?? [];
-          const workingDates = new Set();
-          rows.forEach((row) => {
-            const dates = row?.dates ?? {};
-            Object.values(dates).forEach((entry) => {
-              const duration = String(entry?.duration ?? '').trim();
-              if (
-                entry?.date &&
-                duration &&
-                duration !== '00:00' &&
-                duration !== '0:00'
-              ) {
-                workingDates.add(entry.date);
-              }
-            });
-          });
-          return workingDates.size;
-        } catch (error) {
-          return 0;
-        }
-      };
       const getTimesheetSummary = async (empNumber, yearMonth) => {
         if (!empNumber || !yearMonth) {
           return {actualWorkingDays: 0, overtime: '00:00'};

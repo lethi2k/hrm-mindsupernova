@@ -91,10 +91,6 @@ export default {
       window.appGlobal.baseUrl,
       '/api/v2/time/employees/timesheets/list',
     );
-    const employeeHttp = new APIService(
-      window.appGlobal.baseUrl,
-      '/api/v2/pim/employees',
-    );
     const detailsHttp = new APIService(
       window.appGlobal.baseUrl,
       '/api/v2/time',
@@ -151,39 +147,6 @@ export default {
     };
     const formatSecondsToDecimalHours = (seconds) => {
       return (seconds / 3600).toFixed(2);
-    };
-    const getMonthRange = (dateString) => {
-      const selectedDate = dateString
-        ? parseDate(dateString, 'yyyy-MM-dd')
-        : null;
-      const baseDate = selectedDate ?? new Date();
-      const monthStart = new Date(
-        baseDate.getFullYear(),
-        baseDate.getMonth(),
-        1,
-      );
-      const monthEnd = new Date(
-        baseDate.getFullYear(),
-        baseDate.getMonth() + 1,
-        0,
-      );
-      return {monthStart, monthEnd};
-    };
-    const getMonthPeriodLabel = (dateString) => {
-      const {monthStart, monthEnd} = getMonthRange(dateString);
-      return `${formatDate(monthStart, jsDateFormat, {
-        locale,
-      })} - ${formatDate(monthEnd, jsDateFormat, {locale})}`;
-    };
-    const formatEmployeeName = (employee) => {
-      return [
-        employee?.firstName ?? '',
-        employee?.middleName ?? '',
-        employee?.lastName ?? '',
-      ]
-        .join(' ')
-        .replace(/\s+/g, ' ')
-        .trim();
     };
     const calculateOvertime = (columns) => {
       if (!columns) {
@@ -294,8 +257,6 @@ export default {
       normalizer: actionsNormalizer,
       prefetch: false,
     });
-    const notLoggedItems = ref([]);
-
     watch(
       () => [
         props.filterDate,
@@ -352,67 +313,9 @@ export default {
       },
     );
 
-    const loadNotLoggedEmployees = async () => {
-      if (props.filterHasLoggedTime !== false || !props.filterDate) {
-        notLoggedItems.value = [];
-        return;
-      }
+    const displayItems = computed(() => response.value?.data ?? []);
 
-      const [employeesResponse, loggedResponse] = await Promise.all([
-        employeeHttp.getAll({
-          limit: 200,
-          offset: 0,
-          includeEmployees: 'currentAndPast',
-        }),
-        http.getAll({
-          date: props.filterDate,
-          hasLoggedTime: 'true',
-          limit: 200,
-          offset: 0,
-        }),
-      ]);
-
-      const loggedEmpNumbers = new Set(
-        (loggedResponse?.data?.data ?? []).map(
-          (item) => item.employee?.empNumber,
-        ),
-      );
-
-      const leaveHours = formatSecondsToDecimalHours(
-        currentMonthWorkHours.value * 3600,
-      );
-
-      notLoggedItems.value = (employeesResponse?.data?.data ?? [])
-        .filter((employee) => !loggedEmpNumbers.has(employee.empNumber))
-        .map((employee) => ({
-          id: `not-logged-${employee.empNumber}`,
-          startDate: props.filterDate,
-          empNumber: employee.empNumber,
-          period: getMonthPeriodLabel(props.filterDate),
-          employee: formatEmployeeName(employee),
-          status: $t('time.not_submitted'),
-          totalDuration: '0.00',
-          overtime: '00:00',
-          leaveHours,
-        }));
-    };
-
-    watch(
-      () => [props.filterDate, props.filterHasLoggedTime],
-      () => {
-        loadNotLoggedEmployees();
-      },
-      {immediate: true},
-    );
-
-    const displayItems = computed(() => {
-      if (props.filterHasLoggedTime === false) {
-        return notLoggedItems.value;
-      }
-      return response.value?.data ?? [];
-    });
-
-    const displayTotal = computed(() => displayItems.value.length);
+    const displayTotal = computed(() => total.value ?? 0);
 
     return {
       http,
