@@ -118,6 +118,24 @@ class EmployeeTimesheetListAPI extends Endpoint implements CollectionEndpoint
             $employeeTimesheetListSearchParamHolder->setHasLoggedTime($hasLoggedTime === 'true');
         }
 
+        if ($hasLoggedTime === 'false'
+            && !is_null($employeeTimesheetListSearchParamHolder->getFromDate())
+            && !is_null($employeeTimesheetListSearchParamHolder->getToDate())
+        ) {
+            $empNumbers = $employeeTimesheetListSearchParamHolder->getEmployeeNumbers();
+            if ($empNumbers !== null && $empNumbers !== []) {
+                $anchorDate = !is_null($date)
+                    ? new DateTime($date)
+                    : (clone $employeeTimesheetListSearchParamHolder->getFromDate());
+                $this->getTimesheetService()->ensureTimesheetsExistOverlappingRange(
+                    $empNumbers,
+                    $employeeTimesheetListSearchParamHolder->getFromDate(),
+                    $employeeTimesheetListSearchParamHolder->getToDate(),
+                    $anchorDate
+                );
+            }
+        }
+
         $employeeTimesheetList = $this->getTimesheetService()
             ->getTimesheetDao()
             ->getEmployeeTimesheetList($employeeTimesheetListSearchParamHolder);

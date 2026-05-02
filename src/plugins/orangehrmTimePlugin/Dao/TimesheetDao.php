@@ -22,6 +22,7 @@ namespace OrangeHRM\Time\Dao;
 use DateTime;
 use LogicException;
 use OrangeHRM\Core\Dao\BaseDao;
+use OrangeHRM\Entity\Employee;
 use OrangeHRM\Entity\Timesheet;
 use OrangeHRM\Entity\TimesheetActionLog;
 use OrangeHRM\Entity\TimesheetItem;
@@ -337,6 +338,40 @@ class TimesheetDao extends BaseDao
         $qb->setParameter('activityId', $activityId);
 
         return $this->getPaginator($qb)->count() > 0;
+    }
+
+    /**
+     * Employees in $empNumbers who have no timesheet overlapping [fromDate, toDate] (inclusive overlap).
+     *
+     * @param int[] $empNumbers
+     * @return int[]
+     */
+    public function getEmployeeNumbersWithoutTimesheetOverlappingRange(
+        array $empNumbers,
+        DateTime $fromDate,
+        DateTime $toDate
+    ): array {
+        if ($empNumbers === []) {
+            return [];
+        }
+
+        $qb = $this->createQueryBuilder(Employee::class, 'e');
+        $qb->select('e.empNumber')
+            ->andWhere($qb->expr()->in('e.empNumber', ':empNumbers'))
+            ->setParameter('empNumbers', array_values($empNumbers))
+            ->setParameter('overlapFrom', $fromDate)
+            ->setParameter('overlapTo', $toDate);
+
+        $subQb = $this->createQueryBuilder(Timesheet::class, 't');
+        $subQb->select('1')
+            ->andWhere('t.employee = e')
+            ->andWhere('t.endDate >= :overlapFrom')
+            ->andWhere('t.startDate <= :overlapTo');
+
+        $qb->andWhere($qb->expr()->not($qb->expr()->exists($subQb->getDQL())));
+
+        $rows = $qb->getQuery()->getArrayResult();
+        return array_map(static fn (array $row): int => (int) $row['empNumber'], $rows);
     }
 
     /**

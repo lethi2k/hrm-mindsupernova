@@ -198,6 +198,30 @@ class TimesheetService
     }
 
     /**
+     * For employees with no timesheet overlapping the given range, create one period anchored on
+     * $anchorDateForCreate so list APIs that query Timesheet rows can include them (e.g. "not logged").
+     *
+     * @param int[] $empNumbers
+     */
+    public function ensureTimesheetsExistOverlappingRange(
+        array $empNumbers,
+        DateTime $rangeFrom,
+        DateTime $rangeTo,
+        DateTime $anchorDateForCreate
+    ): void {
+        $missing = $this->getTimesheetDao()->getEmployeeNumbersWithoutTimesheetOverlappingRange(
+            $empNumbers,
+            $rangeFrom,
+            $rangeTo
+        );
+        foreach ($missing as $empNumber) {
+            $timesheet = new Timesheet();
+            $timesheet->getDecorator()->setEmployeeByEmployeeNumber($empNumber);
+            $this->createTimesheetByDate($timesheet, $anchorDateForCreate);
+        }
+    }
+
+    /**
      * @param Timesheet $timesheet
      * @param array $rows
      * @return array<string, TimesheetItem>

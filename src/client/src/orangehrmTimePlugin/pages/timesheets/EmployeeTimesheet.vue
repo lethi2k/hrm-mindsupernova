@@ -89,6 +89,7 @@ import {
   validSelection,
 } from '@/core/util/validation/rules';
 import {navigate} from '@ohrm/core/util/helper/navigation';
+import {APIService} from '@/core/util/services/api.service';
 import useLocale from '@/core/util/composable/useLocale';
 import EmployeeAutocomplete from '@/core/components/inputs/EmployeeAutocomplete';
 import TimesheetPendingActions from '@/orangehrmTimePlugin/components/TimesheetPendingActions.vue';
@@ -151,11 +152,12 @@ export default {
       return `${year}-${String(month).padStart(2, '0')}-01`;
     },
   },
-  mounted() {
+  created() {
     const now = new Date();
     this.selectedMonth = this.months[now.getMonth()];
     this.selectedYear = String(now.getFullYear());
     this.logTimeStatus = this.logTimeStatusOptions[0];
+
     const query = new URLSearchParams(window.location.search);
     const queryDate = query.get('date');
     if (queryDate) {
@@ -166,8 +168,15 @@ export default {
       }
     }
     this.appliedDate = this.selectedDate;
-    const empNumber = query.get('empNumber');
-    this.appliedEmpNumber = empNumber ? Number(empNumber) : null;
+
+    const empNumberRaw = query.get('empNumber');
+    if (empNumberRaw !== null && empNumberRaw !== '') {
+      const n = Number(empNumberRaw);
+      this.appliedEmpNumber = Number.isNaN(n) ? null : n;
+    } else {
+      this.appliedEmpNumber = null;
+    }
+
     const hasLoggedTime = query.get('hasLoggedTime');
     if (hasLoggedTime === 'false') {
       this.logTimeStatus = this.logTimeStatusOptions[1];
@@ -177,22 +186,47 @@ export default {
       this.appliedHasLoggedTime = true;
     }
   },
+  async mounted() {
+    if (this.appliedEmpNumber != null) {
+      await this.hydrateEmployeeFromEmpNumber(this.appliedEmpNumber);
+    }
+  },
 
   methods: {
+    async hydrateEmployeeFromEmpNumber(empNum) {
+      try {
+        const http = new APIService(
+          window.appGlobal.baseUrl,
+          '/api/v2/pim/employees',
+        );
+        const {data} = await http.get(empNum);
+        const e = data?.data;
+        if (!e) {
+          return;
+        }
+        this.employee = {
+          id: e.empNumber,
+          label: `${e.firstName} ${e.middleName} ${e.lastName}`,
+          _employee: e,
+          isPastEmployee: !!e.terminationId,
+        };
+      } catch {
+        // Inaccessible or missing employee: leave selection empty
+      }
+    },
     viewTimesheet() {
       if (!this.selectedDate) {
         return;
       }
-      navigate(
-        '/time/viewEmployeeTimesheet',
-        {},
-        {
-          date: this.selectedDate,
-          empNumber: this.employee?.id ?? undefined,
-          hasLoggedTime:
-            this.logTimeStatus?.id === 'not-logged' ? 'false' : 'true',
-        },
-      );
+      const query = {
+        date: this.selectedDate,
+        hasLoggedTime:
+          this.logTimeStatus?.id === 'not-logged' ? 'false' : 'true',
+      };
+      if (this.employee?.id != null) {
+        query.empNumber = this.employee.id;
+      }
+      navigate('/time/viewEmployeeTimesheet', {}, query);
     },
   },
 };
