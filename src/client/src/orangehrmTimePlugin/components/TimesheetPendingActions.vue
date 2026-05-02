@@ -160,7 +160,8 @@ export default {
       if (!Array.isArray(rows)) {
         return '-';
       }
-      let overtimeSeconds = 0;
+      // Weighted seconds for display: weekday OT ×1.5, weekend ×2 (same as legacy logic).
+      let weightedOvertimeSeconds = 0;
       rows.forEach((row) => {
         Object.entries(row?.dates ?? {}).forEach(([date, entry]) => {
           const dateObj = parseDate(date, 'yyyy-MM-dd');
@@ -170,17 +171,14 @@ export default {
           const dayOfWeek = dateObj.getDay();
           const workedSeconds = getEntryDurationInSeconds(entry?.duration);
           if (dayOfWeek === 0 || dayOfWeek === 6) {
-            // Weekend logged time is treated as overtime.
-            overtimeSeconds += workedSeconds;
+            weightedOvertimeSeconds += workedSeconds * 2;
             return;
           }
-          overtimeSeconds += Math.max(
-            0,
-            workedSeconds - STANDARD_WORKDAY_SECONDS,
-          );
+          weightedOvertimeSeconds +=
+            Math.max(0, workedSeconds - STANDARD_WORKDAY_SECONDS) * 1.5;
         });
       });
-      return formatSecondsToHoursLabel(overtimeSeconds);
+      return formatSecondsToHoursLabel(weightedOvertimeSeconds);
     };
     const calculateRegularDuration = (columns) => {
       if (!columns) {

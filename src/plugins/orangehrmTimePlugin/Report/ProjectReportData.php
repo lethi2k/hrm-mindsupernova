@@ -130,15 +130,18 @@ class ProjectReportData implements ReportData
      */
     private function calculateOvertimeSeconds(array $durationsByDate): float
     {
-        $overtimeSeconds = 0.0;
+        $weightedOvertimeSeconds = 0.0;
         foreach ($durationsByDate as $date => $duration) {
             if ($this->isWeekend($date)) {
-                $overtimeSeconds += (float)$duration;
+                $weightedOvertimeSeconds += (float)$duration * 2;
                 continue;
             }
-            $overtimeSeconds += max(0, (float)$duration - self::STANDARD_WORKDAY_SECONDS);
+            $weightedOvertimeSeconds += max(
+                0,
+                (float)$duration - self::STANDARD_WORKDAY_SECONDS
+            ) * 1.5;
         }
-        return $overtimeSeconds;
+        return $weightedOvertimeSeconds;
     }
 
     /**
