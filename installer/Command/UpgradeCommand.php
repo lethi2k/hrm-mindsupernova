@@ -186,7 +186,7 @@ class UpgradeCommand extends InstallerCommand
         }
         $this->getIO()->note("Current version: $currentVersion");
 
-        $this->getIO()->title('Upgrading OrangeHRM');
+        $this->getIO()->title('Upgrading Mind Supernova');
         $fromAndToVersions = "from <comment>OrangeHRM $currentVersion</comment> to <comment>OrangeHRM " . Config::PRODUCT_VERSION . '</comment>';
         $continue = $this->getIO()->confirm("Do you want to start the upgrader $fromAndToVersions?", true);
         if ($continue !== true) {

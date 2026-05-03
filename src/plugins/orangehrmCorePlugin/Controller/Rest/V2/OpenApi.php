@@ -111,7 +111,7 @@ use OpenApi\Annotations as OA;
  *     )
  * )
  * @OA\Info(
- *     title="OrangeHRM Open Source : REST API v2 docs",
+ *     title="Mind Supernova Open Source : REST API v2 docs",
  *     version=\OrangeHRM\Config\Config::ORANGEHRM_API_VERSION,
  * )
  * @OA\Server(

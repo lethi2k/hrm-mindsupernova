@@ -23,7 +23,7 @@
       :src="embedURL"
       frameborder="0"
       class="orangehrm-buzz-video-frame"
-      title="OrangeHRM buzz video frame"
+      title="Mind Supernova buzz video frame"
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
       allowfullscreen
     ></iframe>
